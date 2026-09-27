@@ -1,0 +1,17 @@
+node_modules/
+dist/
+dist-pages/
+.astro/
+test-results/
+playwright-report/
+.lighthouseci/
+__pycache__/
+
+# Full Lighthouse HTML reports are large; REPORT.md and summary.json are kept
+reports/lighthouse/*.html
+.wrangler/
+
+# Internal build notes, not part of the site
+PLAN.md
+LEARNAI_PROGRESS.md
+Claude outputs/

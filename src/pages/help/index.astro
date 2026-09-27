@@ -1,0 +1,71 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import PromptBox from '../../components/PromptBox.astro';
+import { url } from '../../lib/site';
+
+const guides = (await getCollection('help')).sort((a, b) => a.data.order - b.data.order);
+const categories = ['Careers in AI', 'Responsible use', 'When answers go wrong', 'Using the tools'] as const;
+const jsonLd = {
+  '@context': 'https://schema.org', '@type': 'FAQPage',
+  mainEntity: guides.map((g) => ({ '@type': 'Question', name: g.data.question, acceptedAnswer: { '@type': 'Answer', text: g.data.shortAnswer } })),
+};
+---
+<BaseLayout title="I am stuck" path="help" jsonLd={jsonLd} description="Straight answers on getting into AI, plus quick fixes for common problems with AI tools: wrong answers, made-up sources, limits and privacy.">
+  <PageHeader eyebrow="Help" title="I am stuck" lede="Straight answers on getting into AI, and short guides for when something goes wrong." crumbs={[{ label: 'Help' }]}>
+    <p class="la-help-links"><a href={url('glossary')}>Look up an AI word in the glossary</a></p>
+  </PageHeader>
+  <div class="la-wrap la-help">
+    <nav aria-label="Help topics" class="la-help-toc">
+      <ul>{categories.map((c) => <li><a href={`#${c.toLowerCase().replace(/[^a-z]+/g, '-')}`}>{c}</a></li>)}</ul>
+    </nav>
+    {categories.map((c) => (
+      <section aria-labelledby={c.toLowerCase().replace(/[^a-z]+/g, '-')}>
+        <h2 id={c.toLowerCase().replace(/[^a-z]+/g, '-')}>{c}</h2>
+        {guides.filter((g) => g.data.category === c).map((g) => (
+          <details class="la-guide" id={g.id}>
+            <summary><span class="la-guide__title">{g.data.title}</span><span class="la-guide__q">{g.data.question}</span></summary>
+            <div class="la-guide__body">
+              <p class="la-guide__short">{g.data.shortAnswer}</p>
+              <h3>What to do</h3>
+              <ol>{g.data.steps.map((s) => <li>{s}</li>)}</ol>
+              <p class="la-guide__ok"><strong>You are done when:</strong> {g.data.success}</p>
+              {g.data.prompt && <PromptBox text={g.data.prompt} label="Prompt you can use" />}
+              {g.data.sources.length > 0 && (
+                <p class="la-meta">Read more: {g.data.sources.map((s, i) => <>{i > 0 && ', '}<a href={s.url} rel="noopener noreferrer" target="_blank">{s.title}<span class="la-visually-hidden"> (opens in a new tab)</span></a></>)}</p>
+              )}
+            </div>
+          </details>
+        ))}
+      </section>
+    ))}
+  </div>
+</BaseLayout>
+<script>
+  // Open the guide named in the address, for example /learnai/help/#answer-is-wrong
+  const open = () => {
+    const el = location.hash ? document.getElementById(decodeURIComponent(location.hash.slice(1))) : null;
+    if (el instanceof HTMLDetailsElement) { el.open = true; el.querySelector('summary')?.focus(); }
+  };
+  open();
+  addEventListener('hashchange', open);
+</script>
+<style>
+  .la-help > * { max-width: 860px; }
+  .la-help-links { margin: var(--ji-s-4) 0 0; }
+  .la-help-toc ul { list-style: none; padding: 0; margin: var(--ji-s-6) 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .la-help-toc a { display: inline-block; padding: 8px 14px; border: 1px solid var(--ji-line-strong); border-radius: var(--ji-r-pill); text-decoration: none; color: var(--ji-ink); font-weight: 700; font-size: var(--ji-text-sm); }
+  .la-help-toc a:hover { background: var(--ji-surface-2); }
+  .la-guide { background: var(--ji-surface); border: 1px solid var(--ji-line); border-radius: var(--ji-r-md); margin-bottom: var(--ji-s-3); scroll-margin-top: 24px; }
+  .la-guide summary { cursor: pointer; padding: var(--ji-s-4) var(--ji-s-5); display: flex; flex-direction: column; gap: 2px; list-style: none; position: relative; padding-right: 48px; }
+  .la-guide summary::-webkit-details-marker { display: none; }
+  .la-guide summary::after { content: '+'; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 1.5rem; color: var(--ji-primary); }
+  .la-guide[open] summary::after { content: '−'; }
+  .la-guide__title { font-weight: 700; font-size: 1.0625rem; }
+  .la-guide__q { color: var(--ji-muted); font-size: var(--ji-text-sm); }
+  .la-guide__body { padding: 0 var(--ji-s-5) var(--ji-s-5); }
+  .la-guide__body h3 { font-size: 1.125rem; margin-top: var(--ji-s-4); }
+  .la-guide__short { font-size: 1.0625rem; }
+  .la-guide__ok { border-left: 4px solid var(--ji-success); background: var(--ji-success-soft); padding: 10px 14px; border-radius: 0 var(--ji-r-sm) var(--ji-r-sm) 0; }
+</style>

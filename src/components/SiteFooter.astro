@@ -1,0 +1,49 @@
+---
+import { MAIN_SITE_LINKS, url, SITE } from '../lib/site';
+const year = new Date().getFullYear();
+---
+<footer class="la-footer la-no-print">
+  <div class="la-wrap la-footer__grid">
+    <div>
+      <p class="la-footer__brand">JeyInsights <span aria-hidden="true">·</span> Insights That Shape Futures</p>
+      <p class="la-footer__note">
+        {SITE.shortName} has no accounts and no sign-up. Your answers and progress are saved only in this browser on this device.
+        <a href={url('about')}>How your data is kept</a>
+      </p>
+    </div>
+    <nav aria-label="JeyInsights">
+      <p class="la-footer__head">More from JeyInsights</p>
+      <ul>
+        {MAIN_SITE_LINKS.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+      </ul>
+    </nav>
+    <nav aria-label="Learn AI pages">
+      <p class="la-footer__head">Learn AI</p>
+      <ul>
+        <li><a href={url('careers')}>AI careers</a></li>
+        <li><a href={url('levels')}>The five levels</a></li>
+        <li><a href={url('practice')}>Daily practices</a></li>
+        <li><a href={url('workbooks')}>Workbooks</a></li>
+        <li><a href={url('projects')}>Projects</a></li>
+        <li><a href={url('certificate')}>Level 1 certificate</a></li>
+        <li><a href={url('glossary')}>Glossary</a></li>
+        <li><a href={url('about')}>About and privacy</a></li>
+      </ul>
+    </nav>
+  </div>
+  <div class="la-wrap">
+    <p class="la-footer__small">© {year} Jeyadev. Made for people building a career in AI.</p>
+  </div>
+</footer>
+
+<style>
+  .la-footer { margin-top: var(--ji-s-9); background: var(--ji-footer-bg); color: var(--ji-footer-ink); padding: var(--ji-s-7) 0 var(--ji-s-6); font-size: .9375rem; }
+  .la-footer a { color: #FFFFFF; }
+  .la-footer__grid { display: grid; gap: var(--ji-s-6); grid-template-columns: 1fr; }
+  @media (min-width: 760px) { .la-footer__grid { grid-template-columns: 2fr 1fr 1fr; } }
+  .la-footer__brand { font-family: var(--ji-font-head); font-size: 1.25rem; color: #FFFFFF; margin-bottom: var(--ji-s-2); }
+  .la-footer__note { max-width: 40em; }
+  .la-footer__head { font-weight: 700; color: #FFFFFF; margin-bottom: var(--ji-s-2); }
+  .la-footer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .la-footer__small { margin: var(--ji-s-6) 0 0; padding-top: var(--ji-s-4); border-top: 1px solid rgba(255, 255, 255, .15); font-size: var(--ji-text-sm); }
+</style>

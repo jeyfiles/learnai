@@ -1,0 +1,116 @@
+---
+import BrandMark from './BrandMark.astro';
+import { NAV, url, SITE } from '../lib/site';
+
+const current = Astro.url.pathname;
+---
+<header class="la-header la-no-print">
+  <div class="la-wrap la-header__row">
+    <a class="la-brand" href={url()}>
+      <BrandMark size={40} />
+      <span class="la-brand__text">JeyInsights<span class="la-brand__sub">Learn AI</span></span>
+    </a>
+
+    <button class="la-search-btn" type="button" data-la-search-open aria-haspopup="dialog">
+      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" fill="none"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span class="la-search-btn__text">Search</span>
+      <kbd class="la-search-btn__kbd" data-la-kbd aria-hidden="true">Ctrl K</kbd>
+    </button>
+
+    <button class="la-menu-btn" type="button" aria-expanded="false" aria-controls="la-nav">
+      <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+      Menu
+    </button>
+
+    <nav class="la-nav" id="la-nav" aria-label="Learn AI">
+      <ul>
+        {NAV.map((item) => (
+          <li><a href={item.href} aria-current={item.match.test(current) ? 'page' : undefined}>{item.label}</a></li>
+        ))}
+      </ul>
+      <button class="la-theme" type="button" aria-pressed="false" data-key={`${SITE.storagePrefix}theme`}>
+        <svg class="la-theme__moon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="currentColor"/></svg>
+        <span>Dark mode</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const btn = document.querySelector<HTMLButtonElement>('.la-menu-btn');
+  const nav = document.getElementById('la-nav');
+  if (btn && nav) {
+    const setOpen = (open: boolean) => {
+      btn.setAttribute('aria-expanded', String(open));
+      nav.classList.toggle('is-open', open);
+    };
+    btn.addEventListener('click', () => setOpen(btn.getAttribute('aria-expanded') !== 'true'));
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && btn.getAttribute('aria-expanded') === 'true') { setOpen(false); btn.focus(); }
+    });
+  }
+
+  const theme = document.querySelector<HTMLButtonElement>('.la-theme');
+  if (theme) {
+    const key = theme.dataset.key as string;
+    const root = document.documentElement;
+    const isDark = () => root.dataset.theme === 'dark' ||
+      (!root.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+    const sync = () => theme.setAttribute('aria-pressed', String(isDark()));
+    sync();
+    theme.addEventListener('click', () => {
+      const next = isDark() ? 'light' : 'dark';
+      root.dataset.theme = next;
+      try { localStorage.setItem(key, next); } catch { /* storage can be blocked; the choice then lasts for this page only */ }
+      sync();
+    });
+  }
+</script>
+
+<style>
+  .la-header { background: var(--ji-surface); border-bottom: 1px solid var(--ji-line); position: relative; z-index: 20; }
+  .la-header__row { display: flex; align-items: center; justify-content: space-between; gap: var(--ji-s-4); min-height: 68px; }
+  .la-brand { display: inline-flex; align-items: center; gap: var(--ji-s-3); text-decoration: none; color: var(--ji-ink); }
+  .la-brand__text { font-family: var(--ji-font-head); font-size: 1.375rem; font-weight: 500; line-height: 1; }
+  .la-brand__sub { display: block; margin-top: 4px; font-family: var(--ji-font-body); font-size: var(--ji-text-label); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ji-primary); }
+
+  .la-nav { display: flex; align-items: center; gap: var(--ji-s-5); }
+  .la-nav ul { display: flex; gap: var(--ji-s-5); list-style: none; margin: 0; padding: 0; }
+  .la-nav a { display: block; padding: 8px 0; color: var(--ji-ink-2); text-decoration: none; border-bottom: 3px solid transparent; font-size: 1rem; }
+  .la-nav a:hover { color: var(--ji-ink); border-bottom-color: var(--ji-sage-200); }
+  .la-nav a[aria-current='page'] { color: var(--ji-ink); font-weight: 700; border-bottom-color: var(--ji-brand); }
+
+  .la-theme, .la-menu-btn {
+    display: inline-flex; align-items: center; gap: var(--ji-s-2); min-height: 44px; padding: 8px 12px;
+    font: 700 var(--ji-text-sm)/1 var(--ji-font-body); color: var(--ji-ink);
+    background: transparent; border: 2px solid var(--ji-line-strong); border-radius: var(--ji-r-md); cursor: pointer;
+  }
+  .la-theme:hover, .la-menu-btn:hover { background: var(--ji-surface-2); }
+  .la-theme[aria-pressed='true'] { background: var(--ji-primary-soft); }
+  .la-menu-btn { display: none; }
+  .la-search-btn {
+    display: inline-flex; align-items: center; gap: var(--ji-s-2); min-height: 44px; padding: 8px 12px;
+    font: 700 var(--ji-text-sm)/1 var(--ji-font-body); color: var(--ji-ink); background: var(--ji-surface-2);
+    border: 2px solid var(--ji-line-strong); border-radius: var(--ji-r-md); cursor: pointer; order: 2;
+  }
+  .la-search-btn:hover { background: var(--ji-primary-soft); }
+  .la-search-btn__kbd { font: 700 var(--ji-text-label)/1 var(--ji-font-body); padding: 3px 6px; border: 1px solid var(--ji-line-strong); border-radius: 6px; color: var(--ji-ink-2); background: var(--ji-surface); }
+  .la-nav { order: 1; margin-left: auto; }
+  .la-menu-btn { order: 3; }
+
+  @media (max-width: 1099px) { .la-search-btn__kbd { display: none; } }
+  @media (max-width: 859px) {
+    .la-menu-btn { display: inline-flex; }
+    .la-nav { display: none; position: absolute; left: 0; right: 0; top: 100%; background: var(--ji-surface); border-bottom: 1px solid var(--ji-line); box-shadow: var(--ji-shadow-md); flex-direction: column; align-items: stretch; gap: var(--ji-s-3); padding: var(--ji-s-3) var(--ji-s-4) var(--ji-s-5); }
+    .la-nav.is-open { display: flex; }
+    .la-nav ul { flex-direction: column; gap: 0; }
+    .la-nav a { padding: 12px 4px; border-bottom: 1px solid var(--ji-line); border-left: 4px solid transparent; padding-left: 12px; }
+    .la-nav a[aria-current='page'] { border-bottom-color: var(--ji-line); border-left-color: var(--ji-brand); }
+    .la-theme { align-self: flex-start; }
+    .la-header__row { gap: var(--ji-s-2); }
+    .la-search-btn { margin-left: auto; }
+  }
+  @media (max-width: 420px) {
+    .la-search-btn__text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  }
+</style>

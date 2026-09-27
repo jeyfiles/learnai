@@ -1,0 +1,87 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import Onboarding from '../../components/roadmap/Onboarding.tsx';
+import { toCatalogue } from '../../lib/roadmap/catalogue';
+import { url } from '../../lib/site';
+
+const catalogue = toCatalogue(
+  await getCollection('lessons'),
+  await getCollection('workbooks'),
+  await getCollection('careers'),
+  await getCollection('projects'),
+);
+---
+<BaseLayout title="My roadmap" path="roadmap" description="Answer 10 short questions and get a personal plan for your path into AI, based on your background, your goal and the time you have.">
+  <PageHeader eyebrow="Your plan" title="My AI roadmap" lede="Answer 10 short questions about your background, the AI path you are aiming for and how much time you have. You get a four-week plan with the right lessons, a workbook and portfolio goals." crumbs={[{ label: 'My roadmap' }]} />
+  <div class="la-wrap la-ob">
+    <Onboarding client:load catalogue={catalogue} />
+    <noscript>
+      <div class="la-card">
+        <p>The roadmap questions need JavaScript. You can still <a href={url('learn/level-1')}>start with the Level 1 lessons</a> or <a href={url('careers')}>compare the career paths</a>.</p>
+      </div>
+    </noscript>
+  </div>
+</BaseLayout>
+
+<style is:global>
+  .la-ob { margin-top: var(--ji-s-6); }
+  .la-ob > *, .la-ob__result > * { max-width: 860px; }
+  .la-ob__loading { color: var(--ji-muted); min-height: 200px; }
+  .la-ob h2:focus { outline: none; }
+  .la-ob__intro h2, .la-ob__quiz h2, .la-ob__prep h2, .la-ob__summary h2 { margin-top: 0; }
+  .la-ob__intro ul { padding-left: 1.2em; }
+
+  .la-ob__progress { margin-bottom: var(--ji-s-5); }
+  .la-ob__progress .la-meta { margin-bottom: 6px; }
+  .la-ob__bar { height: 8px; border-radius: 99px; background: var(--ji-surface-2); overflow: hidden; }
+  .la-ob__bar i { display: block; height: 100%; background: var(--ji-brand); }
+  @media (prefers-reduced-motion: no-preference) { .la-ob__bar i { transition: width 250ms var(--ji-ease); } }
+
+  .la-ob__fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+  .la-ob__fieldset legend { padding: 0; margin-bottom: 4px; }
+  .la-ob__quiz h2 { font-size: clamp(1.5rem, 3.5vw, 1.9rem); margin-bottom: 6px; }
+  .la-ob__quiz h2 label { cursor: pointer; }
+  .la-ob__helper { color: var(--ji-muted); margin-bottom: var(--ji-s-4); }
+  .la-ob__options { display: grid; gap: var(--ji-s-3); }
+  .la-ob__option { display: flex; gap: var(--ji-s-3); align-items: flex-start; padding: 14px 16px; border: 2px solid var(--ji-line); border-radius: var(--ji-r-md); background: var(--ji-surface); cursor: pointer; }
+  .la-ob__option:hover { border-color: var(--ji-line-strong); }
+  .la-ob__option.is-selected { border-color: var(--ji-primary); background: var(--ji-primary-soft); }
+  .la-ob__option input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--ji-primary); flex: none; }
+  .la-ob__option:focus-within { outline: 3px solid var(--ji-focus); outline-offset: 2px; }
+  .la-ob__option-label { display: block; font-weight: 700; }
+  .la-ob__option-hint { display: block; font-size: var(--ji-text-sm); color: var(--ji-muted); }
+  .la-ob__field input, .la-ob__field textarea { width: 100%; font: inherit; padding: 12px 14px; border: 2px solid var(--ji-line-strong); border-radius: var(--ji-r-md); background: var(--ji-surface); color: var(--ji-ink); }
+  .la-ob__field textarea { resize: vertical; min-height: 120px; }
+  .la-ob__field [aria-invalid='true'] { border-color: var(--ji-danger); }
+  .la-ob__error { min-height: 1.6em; margin: var(--ji-s-3) 0 0; color: var(--ji-danger); font-weight: 700; }
+  .la-ob__why { margin-top: var(--ji-s-2); font-size: .9375rem; }
+  .la-ob__why summary { cursor: pointer; color: var(--ji-primary); font-weight: 700; }
+  .la-ob__why p { margin: 6px 0 0; color: var(--ji-ink-2); }
+  .la-ob__nav { justify-content: space-between; }
+
+  .la-ob__prep-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; font-size: 1.0625rem; }
+  .la-ob__prep-list li { color: var(--ji-muted); }
+  .la-ob__prep-list li.is-active { color: var(--ji-ink); font-weight: 700; }
+  .la-ob__prep-list li.is-done { color: var(--ji-success); }
+  .la-ob__prep-list span[aria-hidden] { display: inline-block; width: 1.2em; }
+
+  .la-ob__summary { border-top: 6px solid var(--ji-brand); }
+  .la-ob__reasons { padding-left: 1.2em; }
+  .la-ob__facts { display: flex; flex-wrap: wrap; gap: var(--ji-s-3) var(--ji-s-6); margin: var(--ji-s-4) 0; }
+  .la-ob__facts dt { font-size: var(--ji-text-label); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ji-muted); }
+  .la-ob__facts dd { margin: 0; font-weight: 700; }
+  .la-ob__weeks { list-style: none; padding: 0; margin: var(--ji-s-4) 0 0; display: grid; gap: var(--ji-s-4); }
+  .la-ob__weeks h3 { font-size: var(--ji-text-h3); }
+  .la-ob__week-num { display: inline-block; font-family: var(--ji-font-body); font-size: var(--ji-text-label); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ji-on-primary); background: var(--ji-primary); border-radius: var(--ji-r-pill); padding: 2px 10px; margin-right: 8px; vertical-align: middle; }
+  .la-ob__weeks ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+  .la-ob__item { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+  .la-ob__kind { font-size: var(--ji-text-label); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--ji-muted); min-width: 88px; }
+  .la-ob__gaps { margin-top: var(--ji-s-6); border-left: 6px solid var(--ji-l4); }
+  .la-ob__gaps h2, .la-ob__portfolio h2 { margin-top: 0; font-size: var(--ji-text-h3); }
+  .la-ob__gaps ul, .la-ob__portfolio ol { padding-left: 1.2em; }
+  .la-ob__portfolio { margin-top: var(--ji-s-5); }
+  .la-ob__manage { margin-top: var(--ji-s-6); }
+  .la-btn--danger { background: var(--ji-danger); color: var(--ji-bg); }
+</style>

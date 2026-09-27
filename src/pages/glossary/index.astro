@@ -1,0 +1,94 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import { url } from '../../lib/site';
+
+const terms = (await getCollection('glossary')).sort((a, b) => a.data.term.localeCompare(b.data.term));
+const byId = new Map(terms.map((t) => [t.id, t.data.term]));
+const categories = [...new Set(terms.map((t) => t.data.category))];
+const jsonLd = {
+  '@context': 'https://schema.org', '@type': 'DefinedTermSet', name: 'Learn AI glossary',
+  hasDefinedTerm: terms.map((t) => ({ '@type': 'DefinedTerm', name: t.data.term, description: t.data.definition })),
+};
+---
+<BaseLayout title="Glossary" path="glossary" jsonLd={jsonLd} description="Plain-English meanings of common AI words, from prompt and hallucination to RAG, embeddings and evaluation, with an example for each.">
+  <PageHeader eyebrow="Words explained" title="Glossary" lede={`${terms.length} AI words in plain English, each with an example and why it matters to you.`} crumbs={[{ label: 'Help', href: url('help') }, { label: 'Glossary' }]} />
+  <div class="la-wrap">
+    <form class="la-gfilter la-no-print" role="search" data-gfilter data-js-only onsubmit="return false">
+      <label for="g-q">Find a word</label>
+      <input id="g-q" type="search" autocomplete="off" placeholder="For example: prompt" />
+      <fieldset>
+        <legend>Topic</legend>
+        <label><input type="radio" name="cat" value="" checked /> All</label>
+        {categories.map((c) => <label><input type="radio" name="cat" value={c} /> {c}</label>)}
+      </fieldset>
+      <p class="la-meta" role="status" data-gcount>{terms.length} words</p>
+    </form>
+    <dl class="la-terms">
+      {terms.map((t) => (
+        <div class="la-term" id={t.id} data-term data-cat={t.data.category} data-text={`${t.data.term} ${t.data.definition}`.toLowerCase()}>
+          <dt><span class="la-term__name">{t.data.term}</span> <span class="la-chip">{t.data.category}</span></dt>
+          <dd>
+            <p>{t.data.definition}</p>
+            <p><strong>Why it matters:</strong> {t.data.whyItMatters}</p>
+            <p><strong>Example:</strong> {t.data.example}</p>
+            {t.data.related.length > 0 && (
+              <p class="la-meta">See also: {t.data.related.filter((r) => byId.has(r)).map((r, i) => <>{i > 0 && ', '}<a href={`#${r}`}>{byId.get(r)}</a></>)}</p>
+            )}
+          </dd>
+        </div>
+      ))}
+    </dl>
+    <p hidden data-gempty>No words match. Try a shorter search, or choose All.</p>
+  </div>
+</BaseLayout>
+<script>
+  const form = document.querySelector<HTMLFormElement>('[data-gfilter]');
+  if (form) {
+    const items = [...document.querySelectorAll<HTMLElement>('[data-term]')];
+    const count = form.querySelector<HTMLElement>('[data-gcount]')!;
+    const empty = document.querySelector<HTMLElement>('[data-gempty]')!;
+    const q = form.querySelector<HTMLInputElement>('#g-q')!;
+    const apply = () => {
+      const text = q.value.trim().toLowerCase();
+      const cat = (form.querySelector<HTMLInputElement>('input[name="cat"]:checked')?.value) ?? '';
+      let n = 0;
+      items.forEach((el) => {
+        const show = (!cat || el.dataset.cat === cat) && (!text || (el.dataset.text ?? '').includes(text));
+        el.hidden = !show; if (show) n++;
+      });
+      count.textContent = `${n} ${n === 1 ? 'word' : 'words'}`;
+      empty.hidden = n > 0;
+    };
+    form.addEventListener('input', apply);
+    // Opened from search or a link such as /learnai/glossary/#token: clear the filters so the word shows, then focus it.
+    const show = () => {
+      const el = location.hash ? document.getElementById(decodeURIComponent(location.hash.slice(1))) : null;
+      if (!el || !el.hasAttribute('data-term')) return;
+      if (el.hidden) { q.value = ''; form.querySelector<HTMLInputElement>('input[name="cat"][value=""]')!.checked = true; apply(); }
+      el.setAttribute('tabindex', '-1');
+      el.focus();
+    };
+    show();
+    addEventListener('hashchange', show);
+  }
+</script>
+<style>
+  .la-gfilter { margin: var(--ji-s-6) 0 var(--ji-s-5); display: grid; gap: var(--ji-s-3); max-width: 760px; }
+  .la-gfilter[hidden] { display: none; }
+  .la-gfilter > label { font-weight: 700; }
+  .la-gfilter input[type='search'] { font: inherit; min-height: 48px; padding: 10px 14px; border: 2px solid var(--ji-line-strong); border-radius: var(--ji-r-md); background: var(--ji-surface); color: var(--ji-ink); }
+  .la-gfilter fieldset { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px 16px; }
+  .la-gfilter legend { font-weight: 700; margin-bottom: 6px; padding: 0; }
+  .la-gfilter fieldset label { display: inline-flex; gap: 6px; align-items: center; min-height: 32px; }
+  .la-gfilter p { margin: 0; }
+  .la-terms { margin: 0; display: grid; gap: var(--ji-s-4); max-width: 860px; }
+  .la-term { background: var(--ji-surface); border: 1px solid var(--ji-line); border-radius: var(--ji-r-lg); padding: var(--ji-s-5); scroll-margin-top: 24px; }
+  .la-term:target { border-color: var(--ji-primary); box-shadow: 0 0 0 3px var(--ji-primary-soft); }
+  .la-term[hidden] { display: none; }
+  .la-term dt { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: var(--ji-s-2); }
+  .la-term__name { font-family: var(--ji-font-head); font-size: var(--ji-text-h3); font-weight: 500; }
+  .la-term dd { margin: 0; }
+  .la-term dd p:last-child { margin-bottom: 0; }
+</style>

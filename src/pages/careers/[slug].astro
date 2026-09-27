@@ -1,0 +1,68 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import { LEVELS, url } from '../../lib/site';
+
+export async function getStaticPaths() {
+  const all = (await getCollection('careers')).sort((a, b) => a.data.order - b.data.order);
+  return all.map((c) => ({ params: { slug: c.id }, props: { c, others: all.filter((o) => o.id !== c.id) } }));
+}
+interface Props { c: CollectionEntry<'careers'>; others: CollectionEntry<'careers'>[] }
+const { c, others } = Astro.props;
+const d = c.data;
+const { Content } = await render(c);
+const LEVEL_WORD = { none: 'Not needed to start', some: 'Some', strong: 'Strong', basic: 'Basic' } as const;
+---
+<BaseLayout title={`${d.title}: an AI career path`} path={`careers/${c.id}`} ogType="article" description={d.summary}>
+  <PageHeader eyebrow="AI career path" title={d.title} lede={d.summary} crumbs={[{ label: 'Careers', href: url('careers') }, { label: d.title }]}>
+    <dl class="la-facts">
+      <div><dt>Coding</dt><dd>{LEVEL_WORD[d.coding]}</dd></div>
+      <div><dt>Maths</dt><dd>{LEVEL_WORD[d.maths]}</dd></div>
+      <div><dt>Most useful levels</dt><dd>{d.levels.map((n) => `Level ${n}`).join(', ')}</dd></div>
+    </dl>
+  </PageHeader>
+  <div class="la-wrap la-career">
+    <div class="la-career__grid">
+      <section class="la-card" aria-labelledby="h-suits"><h2 id="h-suits">This path suits you if</h2><ul>{d.suitsYouIf.map((x) => <li>{x}</li>)}</ul></section>
+      <section class="la-card" aria-labelledby="h-day"><h2 id="h-day">What the work looks like</h2><ul>{d.dayToDay.map((x) => <li>{x}</li>)}</ul></section>
+      <section class="la-card" aria-labelledby="h-skills"><h2 id="h-skills">Skills to build</h2><ul>{d.skills.map((x) => <li>{x}</li>)}</ul></section>
+      <section class="la-card" aria-labelledby="h-titles"><h2 id="h-titles">Job titles to search for</h2><ul>{d.jobTitles.map((x) => <li>{x}</li>)}</ul></section>
+    </div>
+
+    <section class="la-card la-first" aria-labelledby="h-first">
+      <h2 id="h-first">Your first portfolio pieces</h2>
+      <ol>{d.firstPortfolioPieces.map((x) => <li>{x}</li>)}</ol>
+    </section>
+
+    <div class="la-career__body"><Content /></div>
+
+    <section aria-labelledby="h-levels">
+      <h2 id="h-levels">Levels that matter most</h2>
+      <ul class="la-chips-list">
+        {d.levels.map((n) => { const l = LEVELS.find((x) => x.number === n)!; return <li><a href={url(`levels/${l.slug}`)}>Level {n}: {l.title}</a></li>; })}
+      </ul>
+    </section>
+
+    <nav class="la-others" aria-label="Other career paths">
+      <h2>Other paths</h2>
+      <ul class="la-chips-list">{others.map((o) => <li><a href={url(`careers/${o.id}`)}>{o.data.title}</a></li>)}</ul>
+    </nav>
+    <p class="la-meta">Job titles and requirements vary between companies and countries. Check real job postings where you want to work.</p>
+  </div>
+</BaseLayout>
+<style>
+  .la-facts { display: flex; flex-wrap: wrap; gap: var(--ji-s-3) var(--ji-s-6); margin: var(--ji-s-5) 0 0; }
+  .la-facts dt { font-size: var(--ji-text-label); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ji-muted); }
+  .la-facts dd { margin: 0; font-weight: 700; }
+  .la-career > * { max-width: 960px; }
+  .la-career__grid { display: grid; gap: var(--ji-s-4); grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); margin-top: var(--ji-s-6); }
+  .la-career__grid h2, .la-first h2 { margin-top: 0; font-size: var(--ji-text-h3); }
+  .la-career__grid ul, .la-first ol { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
+  .la-first { margin-top: var(--ji-s-5); border-left: 6px solid var(--ji-brand); }
+  .la-chips-list { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .la-chips-list a { display: inline-block; padding: 8px 14px; border: 1px solid var(--ji-line-strong); border-radius: var(--ji-r-pill); text-decoration: none; color: var(--ji-ink); font-weight: 700; font-size: var(--ji-text-sm); }
+  .la-chips-list a:hover { background: var(--ji-surface-2); }
+  .la-others { margin-top: var(--ji-s-6); }
+  .la-others h2 { font-size: var(--ji-text-h3); }
+</style>

@@ -1,0 +1,41 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import { url } from '../../lib/site';
+import { getWorkbooks, slugOf, pathList } from '../../lib/content';
+const workbooks = await getWorkbooks();
+---
+<BaseLayout title="Workbooks" path="workbooks" description="Guided AI workbooks: write a research brief, explain an AI paper or model card, build your AI job application kit and your portfolio page.">
+  <PageHeader eyebrow="Guided practice" title="Workbooks" lede="A workbook takes one to two hours. You work through it in parts and finish with a piece you can add to your portfolio." crumbs={[{ label: 'Lessons', href: url('learn') }, { label: 'Workbooks' }]} />
+  <div class="la-wrap">
+    <h2 class="la-visually-hidden">All workbooks</h2>
+    <div class="la-grid la-wb-grid">
+      {workbooks.map((w) => (
+        <article class="la-card la-wb" style={`--lvl: var(--ji-l${w.data.level})`} data-item={`workbook:${slugOf(w.id)}`} data-wb-card>
+          <p class="la-wb__chips"><span class="la-chip">Level {w.data.level}</span>{w.data.tools.map((t) => <span class="la-chip">{t}</span>)}<span class="la-chip la-chip--done" hidden data-done-chip>Done</span></p>
+          <h3><a href={url(`workbooks/${slugOf(w.id)}`)}>{w.data.title}</a></h3>
+          <p>{w.data.promise}</p>
+          <p class="la-meta">About {w.data.minutes} minutes · For {pathList(w.data.paths)}</p>
+        </article>
+      ))}
+    </div>
+  </div>
+</BaseLayout>
+<script>
+  import { getProgress } from '../../lib/storage';
+  const done = new Set(getProgress().done);
+  document.querySelectorAll<HTMLElement>('[data-wb-card]').forEach((c) => {
+    if (done.has(c.dataset.item!)) c.querySelector<HTMLElement>('[data-done-chip]')!.hidden = false;
+  });
+</script>
+<style>
+  .la-wb-grid { margin-top: var(--ji-s-6); }
+  .la-wb { position: relative; display: flex; flex-direction: column; border-top: 6px solid var(--lvl); }
+  .la-wb__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .la-wb h3 a { color: var(--ji-ink); text-decoration: none; }
+  .la-wb h3 a::after { content: ''; position: absolute; inset: 0; }
+  .la-wb h3 a:hover { text-decoration: underline; }
+  .la-wb:focus-within { outline: 3px solid var(--ji-focus); outline-offset: 2px; }
+  .la-wb h3 a:focus-visible { outline: none; }
+  .la-wb .la-meta { margin: auto 0 0; }
+</style>

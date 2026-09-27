@@ -1,0 +1,36 @@
+---
+import type { Lesson } from '../lib/content';
+import { slugOf, pathList, FREE_TIER_LABEL } from '../lib/content';
+import { url } from '../lib/site';
+interface Props { lesson: Lesson }
+const { lesson } = Astro.props;
+const d = lesson.data;
+const slug = slugOf(lesson.id);
+---
+<article class="la-card la-lcard" style={`--lvl: var(--ji-l${d.level})`}
+  data-lesson-card data-tool={d.tool} data-paths={d.paths.join(' ')} data-item={`lesson:${slug}`}>
+  <p class="la-lcard__chips">
+    <span class="la-chip la-chip--lvl">Level {d.level}</span>
+    <span class="la-chip">{d.tool}</span>
+    <span class="la-chip la-chip--done" hidden data-done-chip>Done</span>
+  </p>
+  <h3 class="la-lcard__title"><a href={url(`learn/${slug}`)}>{d.title}</a></h3>
+  <p>{d.summary}</p>
+  <p class="la-meta la-lcard__meta">{d.builds.length} builds · {d.minutes} min · {FREE_TIER_LABEL[d.freeTier.status]} · {pathList(d.paths)}</p>
+</article>
+
+<style>
+  .la-lcard { position: relative; padding-top: calc(var(--ji-s-5) + 6px); overflow: hidden; display: flex; flex-direction: column; }
+  .la-lcard::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 6px; background: var(--lvl); }
+  .la-lcard__chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--ji-s-3); }
+  .la-chip--lvl { background: transparent; border: 1.5px solid var(--lvl); color: var(--lvl); }
+  .la-chip--age { background: var(--ji-accent-soft); color: var(--ji-accent); }
+  .la-chip--done { background: var(--ji-success); color: var(--ji-on-primary); }
+  .la-lcard__title { font-size: var(--ji-text-h3); margin-bottom: var(--ji-s-2); }
+  .la-lcard__title a { color: var(--ji-ink); text-decoration: none; }
+  .la-lcard__title a::after { content: ''; position: absolute; inset: 0; }
+  .la-lcard__title a:hover { text-decoration: underline; }
+  .la-lcard:focus-within { outline: 3px solid var(--ji-focus); outline-offset: 2px; }
+  .la-lcard__title a:focus-visible { outline: none; }
+  .la-lcard__meta { margin: auto 0 0; }
+</style>

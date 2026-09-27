@@ -1,0 +1,6 @@
+# robots.txt for jeyinsights.com
+User-agent: *
+Allow: /
+
+Sitemap: https://jeyinsights.com/sitemap.xml
+Sitemap: https://jeyinsights.com/learnai/sitemap-index.xml

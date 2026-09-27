@@ -1,0 +1,88 @@
+---
+// Lets the learner pick one practice build. Without JavaScript, all builds show one after another.
+import StepList from './StepList.astro';
+import { pathList } from '../lib/content';
+
+interface Step { title: string; action: string; clickPath?: string[]; prompt?: string; checkpoint: string }
+interface Build { id: string; title: string; forPaths: string[]; scenario: string; outcome: string; steps: Step[]; proof: string[] }
+interface Props { builds: Build[] }
+const { builds } = Astro.props;
+---
+<div class="la-builds" data-builds>
+  <div class="la-builds__tabs" role="tablist" aria-label="Practice builds" hidden data-tablist>
+    {builds.map((b, i) => (
+      <button type="button" role="tab" id={`tab-${b.id}`} aria-controls={`panel-${b.id}`}
+        aria-selected={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1} data-build={b.id}>
+        <span class="la-builds__for">{pathList(b.forPaths)}</span>
+        <span class="la-builds__name">{b.title}</span>
+      </button>
+    ))}
+  </div>
+  {builds.map((b) => (
+    <section class="la-build" id={`panel-${b.id}`} role="tabpanel" aria-labelledby={`tab-${b.id}`} tabindex="-1">
+      <h3 class="la-build__title">{b.title}</h3>
+      <p class="la-build__scenario"><strong>The situation:</strong> {b.scenario}</p>
+      <p class="la-build__outcome"><strong>You will finish with:</strong> {b.outcome}</p>
+      <StepList steps={b.steps} headingLevel="h4" />
+      <div class="la-build__proof">
+        <h4>Save for your portfolio</h4>
+        <ul>{b.proof.map((p) => <li>{p}</li>)}</ul>
+      </div>
+    </section>
+  ))}
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-builds]').forEach((root) => {
+    const list = root.querySelector<HTMLElement>('[data-tablist]');
+    if (!list) return;
+    const tabs = [...list.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+    const panels = tabs.map((t) => document.getElementById(t.getAttribute('aria-controls')!)!);
+    list.hidden = false;
+    const select = (i: number, focus = false, push = false) => {
+      tabs.forEach((t, j) => {
+        const on = i === j;
+        t.setAttribute('aria-selected', String(on));
+        t.tabIndex = on ? 0 : -1;
+        panels[j].hidden = !on;
+      });
+      if (focus) tabs[i].focus();
+      if (push) {
+        const u = new URL(location.href);
+        u.searchParams.set('build', tabs[i].dataset.build!);
+        history.replaceState(null, '', u);
+      }
+    };
+    const wanted = new URL(location.href).searchParams.get('build');
+    const start = Math.max(0, tabs.findIndex((t) => t.dataset.build === wanted));
+    select(start);
+    tabs.forEach((t, i) => {
+      t.addEventListener('click', () => select(i, false, true));
+      t.addEventListener('keydown', (e) => {
+        const n = tabs.length;
+        const k = e.key;
+        const next = k === 'ArrowRight' || k === 'ArrowDown' ? (i + 1) % n : k === 'ArrowLeft' || k === 'ArrowUp' ? (i - 1 + n) % n : k === 'Home' ? 0 : k === 'End' ? n - 1 : -1;
+        if (next >= 0) { e.preventDefault(); select(next, true, true); }
+      });
+    });
+  });
+</script>
+
+<style>
+  .la-builds__tabs { display: grid; gap: var(--ji-s-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); margin: var(--ji-s-4) 0 var(--ji-s-5); }
+  .la-builds__tabs[hidden] { display: none; }
+  .la-builds__tabs button {
+    text-align: left; display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; cursor: pointer;
+    background: var(--ji-surface); color: var(--ji-ink); border: 2px solid var(--ji-line); border-radius: var(--ji-r-md); font: inherit;
+  }
+  .la-builds__tabs button:hover { border-color: var(--ji-line-strong); }
+  .la-builds__tabs button[aria-selected='true'] { border-color: var(--ji-primary); background: var(--ji-primary-soft); box-shadow: inset 0 0 0 1px var(--ji-primary); }
+  .la-builds__for { font-size: var(--ji-text-label); font-weight: 700; color: var(--ji-muted); }
+  .la-builds__name { font-weight: 700; line-height: 1.3; }
+  .la-build { background: var(--ji-surface); border: 1px solid var(--ji-line); border-radius: var(--ji-r-lg); padding: var(--ji-s-5); margin-bottom: var(--ji-s-5); }
+  .la-build:focus { outline: none; }
+  .la-build__title { margin-top: 0; }
+  .la-build__proof { margin-top: var(--ji-s-5); padding-top: var(--ji-s-4); border-top: 1px solid var(--ji-line); }
+  .la-build__proof h4 { font-size: 1.125rem; }
+  .la-build__proof ul { margin: 0; padding-left: 1.2em; }
+</style>

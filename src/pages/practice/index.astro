@@ -1,0 +1,49 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import { url } from '../../lib/site';
+import { getPractices } from '../../lib/today/data';
+import { STAGE_LABEL, type Stage } from '../../lib/today/picker';
+
+const practices = await getPractices();
+const STAGES: { id: Stage; intro: string }[] = [
+  { id: 'worked', intro: 'Each one starts with a full worked example you can follow.' },
+  { id: 'guided', intro: 'The example is there if you need it. You do more of the thinking.' },
+  { id: 'independent', intro: 'You plan the work yourself. Steps and a prompt are there as hints.' },
+];
+---
+<BaseLayout title="Daily practices" path="practice" description="All the short daily AI practices: rewrite a prompt, spot a made-up detail, test a prompt, write a case study and more. 10 to 20 minutes each.">
+  <PageHeader eyebrow="Daily practice" title="All daily practices" lede="The home page picks one of these for you each day, starting with worked examples. You can also open any practice here and do it again." crumbs={[{ label: 'Daily practices' }]} />
+  <div class="la-wrap">
+    <p><a class="la-btn la-btn--primary" href={`${url()}#today`}>Go to today's practice</a></p>
+    {STAGES.map((s) => (
+      <section class="la-pr-stage" aria-labelledby={`la-pr-${s.id}`}>
+        <h2 id={`la-pr-${s.id}`}>{STAGE_LABEL[s.id]}</h2>
+        <p>{s.intro}</p>
+        <ol class="la-pr-list">
+          {practices.filter((p) => p.stage === s.id).map((p) => (
+            <li class="la-card" data-practice-card={p.id}>
+              <a href={url(`practice/${p.id}`)}>{p.title}</a>
+              <span class="la-meta">{p.minutes} minutes · {p.skill}</span>
+              <span class="la-chip la-chip--done" hidden data-done-chip>Done</span>
+            </li>
+          ))}
+        </ol>
+      </section>
+    ))}
+  </div>
+</BaseLayout>
+<script>
+  import { readJSON } from '../../lib/storage';
+  import { cleanDaily } from '../../lib/today/picker';
+  const done = cleanDaily(readJSON('daily', null)).done;
+  document.querySelectorAll<HTMLElement>('[data-practice-card]').forEach((c) => {
+    if (done[c.dataset.practiceCard!]) c.querySelector<HTMLElement>('[data-done-chip]')!.hidden = false;
+  });
+</script>
+<style>
+  .la-pr-stage { margin-top: var(--ji-s-6); }
+  .la-pr-list { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--ji-s-3); grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+  .la-pr-list li { display: flex; flex-direction: column; gap: var(--ji-s-1); align-items: flex-start; }
+  .la-pr-list a { font-weight: 700; }
+</style>

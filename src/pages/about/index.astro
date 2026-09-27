@@ -1,0 +1,24 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import { SITE } from '../../lib/site';
+---
+<BaseLayout title="About and privacy" path="about" description="Who makes JeyInsights Learn AI, and how your progress is kept: on your device only, with no accounts and no tracking.">
+  <PageHeader eyebrow="About" title="About and privacy" lede="Learn AI is a free project by Jeyadev for people building a career in AI. It has no accounts, no ads and no sign-up." crumbs={[{ label: 'About and privacy' }]} />
+  <div class="la-wrap la-prose la-about">
+    <h2>What is saved, and where</h2>
+    <p>When you answer the roadmap questions, finish a lesson or write a reflection, it is saved in your browser on this device. It is not sent to JeyInsights or to anyone else. If you use a different browser or device, you start fresh there.</p>
+    <p>Everything Learn AI saves uses names that start with <code>{SITE.storagePrefix}</code>, so it is easy to find and remove.</p>
+    <h2>What is not collected</h2>
+    <p>No name, email address or employer is collected by us. There is no login and no advertising. The site uses Cloudflare Web Analytics, which counts page visits without cookies and without building a profile of you.</p>
+    <h2>The AI tools in the lessons</h2>
+    <p>The tools used in the lessons are run by other companies, each with its own terms. Some need an account, some are limited in certain countries, and some set a minimum age. Claude, for example, is only for adults. Each lesson lists what you need before you start. Never paste passwords, other people's personal details or confidential work into an AI tool.</p>
+    <h2>Questions or mistakes</h2>
+    <p>If you spot a mistake or a lesson that no longer matches a tool's screens, please use the contact options on <a href="https://jeyinsights.com/">jeyinsights.com</a>.</p>
+    <h2>Clear your saved progress</h2>
+    <p>A button to clear or move your progress will be added here soon. For now, you can clear this site's data in your browser settings.</p>
+  </div>
+</BaseLayout>
+<style>
+  .la-about h2:first-child { margin-top: var(--ji-s-6); }
+</style>

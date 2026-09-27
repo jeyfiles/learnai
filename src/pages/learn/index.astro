@@ -1,0 +1,20 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import LevelCard from '../../components/LevelCard.astro';
+import { LEVELS, url } from '../../lib/site';
+---
+<BaseLayout title="Lessons" path="learn" description="Short, practical AI lessons in five levels. Each one shows where to click, gives you a prompt to copy and tells you what a good result looks like.">
+  <PageHeader eyebrow="Tool lessons" title="Lessons" lede="Pick a level. Each lesson uses one AI tool on a real task, with clear steps, a prompt to copy, a check at the end and proof for your portfolio." crumbs={[{ label: 'Lessons' }]} />
+  <div class="la-wrap">
+    <h2>Choose a level</h2>
+    <div class="la-grid">
+      {LEVELS.map((level) => <LevelCard level={level} to="lessons" />)}
+    </div>
+    <h2>Other ways to learn</h2>
+    <ul class="la-prose">
+      <li><a href={url('workbooks')}>Workbooks</a>: longer guided exercises with a clear result at the end.</li>
+      <li><a href={url('levels')}>The five levels</a>: what each level covers and what you should be able to show before you move on.</li>
+    </ul>
+  </div>
+</BaseLayout>

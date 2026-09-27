@@ -1,0 +1,84 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import StepList from '../../components/StepList.astro';
+import MarkComplete from '../../components/MarkComplete.astro';
+import SourceList from '../../components/SourceList.astro';
+import { url } from '../../lib/site';
+import { getWorkbooks, slugOf, pathList, pathLabel, type Workbook } from '../../lib/content';
+
+export async function getStaticPaths() {
+  const all = await getWorkbooks();
+  return all.map((w) => ({ params: { slug: slugOf(w.id) }, props: { w } }));
+}
+interface Props { w: Workbook }
+const { w } = Astro.props;
+const d = w.data;
+const slug = slugOf(w.id);
+---
+<BaseLayout title={d.title} path={`workbooks/${slug}`} ogType="article" description={d.promise}>
+  <PageHeader eyebrow={`Level ${d.level} workbook · ${d.tools.join(', ')}`} title={d.title} lede={d.promise}
+    crumbs={[{ label: 'Lessons', href: url('learn') }, { label: 'Workbooks', href: url('workbooks') }, { label: d.title }]}>
+    <dl class="la-facts">
+      <div><dt>Time</dt><dd>About {d.minutes} minutes</dd></div>
+      <div><dt>For</dt><dd>{pathList(d.paths)}</dd></div>
+    </dl>
+  </PageHeader>
+  <div class="la-wrap la-wbook">
+    <section aria-labelledby="h-outcome" class="la-card la-outcome">
+      <h2 id="h-outcome">You will finish with</h2>
+      <p>{d.outcome}</p>
+    </section>
+
+    <section aria-labelledby="h-before">
+      <h2 id="h-before">Before you start</h2>
+      <ul>{d.beforeYouStart.map((b) => <li>{b}</li>)}</ul>
+    </section>
+
+    <section aria-labelledby="h-versions">
+      <h2 id="h-versions">Pick your version</h2>
+      <p>The steps are the same. Use the version that matches your situation when you fill in the prompts.</p>
+      <div class="la-grid">
+        {d.versions.map((v) => (
+          <div class="la-card la-version"><p class="la-meta">{pathLabel(v.path)}</p><h3>{v.title}</h3><p>{v.brief}</p></div>
+        ))}
+      </div>
+    </section>
+
+    {d.parts.map((part, i) => (
+      <section class="la-part" aria-labelledby={`h-part-${i}`}>
+        <p class="la-eyebrow">Part {i + 1} of {d.parts.length}</p>
+        <h2 id={`h-part-${i}`}>{part.title}</h2>
+        <p>{part.purpose}</p>
+        <StepList steps={part.steps} />
+      </section>
+    ))}
+
+    <section aria-labelledby="h-tests" class="la-card">
+      <h2 id="h-tests">Check your result</h2>
+      <ul class="la-checks">{d.tests.map((t) => <li>{t}</li>)}</ul>
+      <h3>Save for your portfolio</h3>
+      <ul>{d.proof.map((p) => <li>{p}</li>)}</ul>
+    </section>
+
+    <MarkComplete item={`workbook:${slug}`} label="Mark this workbook as done" />
+    <SourceList sources={d.sources} />
+  </div>
+</BaseLayout>
+<style>
+  .la-facts { display: flex; flex-wrap: wrap; gap: var(--ji-s-3) var(--ji-s-6); margin: var(--ji-s-5) 0 0; }
+  .la-facts dt { font-size: var(--ji-text-label); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ji-muted); }
+  .la-facts dd { margin: 0; font-weight: 700; }
+  .la-wbook > * { max-width: 860px; }
+  .la-outcome { margin-top: var(--ji-s-6); border-left: 6px solid var(--ji-brand); }
+  .la-outcome h2 { margin-top: 0; font-size: var(--ji-text-h3); }
+  .la-outcome p { margin: 0; }
+  .la-version h3 { font-size: 1.1875rem; margin-bottom: 4px; }
+  .la-version p { margin: 0; }
+  .la-version .la-meta { margin-bottom: 4px; }
+  .la-part { margin-top: var(--ji-s-7); padding-top: var(--ji-s-5); border-top: 2px solid var(--ji-line); }
+  .la-part h2 { margin-top: 0; }
+  .la-checks li::marker { content: '✓  '; color: var(--ji-success); }
+  section.la-card { margin-top: var(--ji-s-7); }
+  section.la-card h2 { margin-top: 0; }
+</style>

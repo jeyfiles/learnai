@@ -1,0 +1,39 @@
+--- jeyinsights/worker.js (now)
++++ jeyinsights/worker.js (new)
+@@ -1,6 +1,13 @@
+ // worker.js
+-// Proxies jeyinsights.com/tnea/* → tneacompasslite.pages.dev
+-// URL stays as jeyinsights.com/tnea in the browser
++// jeyinsights.com
++// - /tnea and /tnea/*  -> proxied to tneacompasslite.pages.dev (URL stays jeyinsights.com/tnea)
++// - /resources         -> resources.html
++// - /learnai/*         -> JeyInsights Learn AI (static files in public/learnai). Unknown addresses get
++//                         the Learn AI "page not found" page with a real 404 status.
++// - everything else    -> static files
++//
++// Static files that exist are served by Cloudflare before this Worker runs, so this code only
++// sees /tnea, /resources and addresses that do not match a file.
+ 
+ const TNEA_ORIGIN = 'https://tneacompasslite.pages.dev';
+ 
+@@ -43,7 +50,19 @@
+       return env.ASSETS.fetch(new Request(resourceURL.toString(), request));
+     }
+ 
+-    // All other paths — serve static assets via Workers Sites
++    // Learn AI: an address under /learnai/ that is not a file gets the Learn AI 404 page.
++    if (url.pathname === '/learnai' || url.pathname.startsWith('/learnai/')) {
++      const res = await env.ASSETS.fetch(request);
++      if (res.status !== 404) return res;
++      // The 404 page is learnai/404.html. Static assets serve it at /learnai/404 (without .html).
++      const notFound = await env.ASSETS.fetch(new URL('/learnai/404', url));
++      return new Response(notFound.body, {
++        status  : 404,
++        headers : { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' },
++      });
++    }
++
++    // All other paths — serve static assets
+     return env.ASSETS.fetch(request);
+   },
+ };

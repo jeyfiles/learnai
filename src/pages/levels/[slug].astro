@@ -1,0 +1,51 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import { LEVELS, url, type LevelInfo } from '../../lib/site';
+
+export async function getStaticPaths() {
+  const docs = await getCollection('levels');
+  return LEVELS.map((level) => ({ params: { slug: level.slug }, props: { level, doc: docs.find((d) => d.data.number === level.number)! } }));
+}
+interface Props { level: LevelInfo; doc: Awaited<ReturnType<typeof getCollection<'levels'>>>[number] }
+const { level, doc } = Astro.props;
+const { Content } = await render(doc);
+const open = level.status !== 'coming-soon';
+---
+<BaseLayout title={`Level ${level.number}: ${level.title}`} path={`levels/${level.slug}`} ogType="article" description={`Level ${level.number} overview: ${doc.data.outcome}`}>
+  <PageHeader eyebrow={`Level ${level.number} of 5`} title={level.title} lede={doc.data.outcome} crumbs={[{ label: 'The five levels', href: url('levels') }, { label: `Level ${level.number}` }]}>
+    <p class="la-lvl-cta">
+      {open ? <a class="la-btn la-btn--primary" href={url(`learn/level-${level.number}`)}>Go to the Level {level.number} lessons</a>
+            : <span class="la-chip">Coming later</span>}
+    </p>
+  </PageHeader>
+  <div class="la-wrap la-lvl" style={`--lvl: var(--ji-l${level.number})`}>
+    <div class="la-lvl__grid">
+      <section class="la-card" aria-labelledby="h-learn"><h2 id="h-learn">You will learn</h2><ul>{doc.data.youWillLearn.map((x) => <li>{x}</li>)}</ul></section>
+      <section class="la-card" aria-labelledby="h-tools"><h2 id="h-tools">Tools</h2><ul>{doc.data.tools.map((x) => <li>{x}</li>)}</ul></section>
+    </div>
+    <div class="la-lvl__body"><Content /></div>
+    <section class="la-card la-gate" aria-labelledby="h-gate">
+      <h2 id="h-gate">Show this before you move on</h2>
+      <p>Keep this proof in a folder or notebook. You do not need to send it anywhere.</p>
+      <ul class="la-gate__list">{doc.data.evidenceGate.map((x) => <li>{x}</li>)}</ul>
+    </section>
+    <nav class="la-lvl__nav" aria-label="Other levels">
+      <ul>{LEVELS.map((l) => <li><a href={url(`levels/${l.slug}`)} aria-current={l.number === level.number ? 'page' : undefined}>Level {l.number}</a></li>)}</ul>
+    </nav>
+  </div>
+</BaseLayout>
+<style>
+  .la-lvl-cta { margin: var(--ji-s-5) 0 0; }
+  .la-lvl > * { max-width: 860px; }
+  .la-lvl__grid { display: grid; gap: var(--ji-s-4); grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); margin-top: var(--ji-s-6); }
+  .la-lvl__grid h2, .la-gate h2 { margin-top: 0; font-size: var(--ji-text-h3); }
+  .la-lvl__grid ul { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
+  .la-lvl__body :global(h2) { margin-top: var(--ji-s-7); }
+  .la-gate { margin-top: var(--ji-s-7); border-top: 6px solid var(--lvl); }
+  .la-gate__list { margin: 0; padding-left: 1.2em; }
+  .la-lvl__nav ul { list-style: none; padding: 0; margin: var(--ji-s-6) 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .la-lvl__nav a { display: inline-block; padding: 8px 14px; border: 1px solid var(--ji-line-strong); border-radius: var(--ji-r-pill); text-decoration: none; color: var(--ji-ink); font-weight: 700; font-size: var(--ji-text-sm); }
+  .la-lvl__nav a[aria-current='page'] { background: var(--ji-primary); color: var(--ji-on-primary); border-color: var(--ji-primary); }
+</style>

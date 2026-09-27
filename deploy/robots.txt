@@ -1,0 +1,6 @@
+# Suggested robots.txt for the root of jeyinsights.com (the main site has none yet).
+User-agent: *
+Allow: /
+
+Sitemap: https://www.jeyinsights.com/sitemap.xml
+Sitemap: https://www.jeyinsights.com/learnai/sitemap-index.xml

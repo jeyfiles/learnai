@@ -1,0 +1,8 @@
+# Redirects for jeyinsights.com (Cloudflare Pages reads this file from the site root).
+# /tnea is not handled here: Pages redirects cannot proxy to another domain.
+# The three example lines below pointed to placeholder sites. They are switched off so that
+# /blog/, /projects/ and /swimming/ do not send visitors to addresses that do not exist.
+# Put a real address in and remove the # to switch one on.
+# /swimming/*    https://your-swimming-site.pages.dev/:splat  301
+# /projects/*    https://your-project-site.pages.dev/:splat   301
+# /blog/*        https://your-blog-site.pages.dev/:splat      301

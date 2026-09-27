@@ -1,0 +1,40 @@
+---
+// A prompt the learner can copy. The Copy button works with a mouse, keyboard or touch.
+interface Props { text: string; label?: string }
+const { text, label = 'Prompt to copy' } = Astro.props;
+---
+<figure class="la-prompt">
+  <figcaption class="la-prompt__label">{label}</figcaption>
+  <pre class="la-prompt__text"><code>{text.trim()}</code></pre>
+  <button class="la-prompt__copy la-no-print" type="button" data-copy>Copy<span class="la-visually-hidden"> prompt</span></button>
+  <span class="la-visually-hidden" role="status" data-copy-status></span>
+</figure>
+
+<script>
+  document.addEventListener('click', async (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-copy]');
+    if (!btn) return;
+    const box = btn.closest('.la-prompt');
+    const text = box?.querySelector('code')?.textContent ?? '';
+    const status = box?.querySelector('[data-copy-status]');
+    let ok = false;
+    try { await navigator.clipboard.writeText(text); ok = true; } catch {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.append(ta); ta.select();
+      try { ok = document.execCommand('copy'); } catch { ok = false; }
+      ta.remove();
+    }
+    btn.firstChild!.textContent = ok ? 'Copied' : 'Select and copy';
+    if (status) status.textContent = ok ? 'Prompt copied' : 'Copy did not work. Select the text and copy it.';
+    setTimeout(() => { btn.firstChild!.textContent = 'Copy'; if (status) status.textContent = ''; }, 2000);
+  });
+</script>
+
+<style>
+  .la-prompt { position: relative; margin: var(--ji-s-3) 0; background: var(--ji-code-bg); color: var(--ji-code-ink); border-radius: var(--ji-r-md); padding: var(--ji-s-4); }
+  .la-prompt__label { font-size: var(--ji-text-label); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #C9D8CE; margin-bottom: var(--ji-s-2); }
+  .la-prompt__text { margin: 0; white-space: pre-wrap; word-break: break-word; font-size: .9375rem; line-height: 1.55; }
+  .la-prompt__copy { position: absolute; top: 10px; right: 10px; min-height: 36px; padding: 6px 14px; font: 700 var(--ji-text-sm)/1 var(--ji-font-body); color: var(--ji-sage-900); background: var(--ji-sage-300); border: 0; border-radius: var(--ji-r-sm); cursor: pointer; }
+  .la-prompt__copy:hover { background: var(--ji-sage-200); }
+</style>

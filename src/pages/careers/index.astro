@@ -1,0 +1,51 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import { url } from '../../lib/site';
+
+const paths = (await getCollection('careers')).sort((a, b) => a.data.order - b.data.order);
+const LEVEL_WORD = { none: 'Not needed', some: 'Some', strong: 'Strong', basic: 'Basic' } as const;
+---
+<BaseLayout title="AI careers" path="careers" description="Five paths into an AI career, from using AI in your own field to building AI apps. See what each involves, the coding and maths it needs, and what to build first.">
+  <PageHeader eyebrow="AI careers" title="Find your path into AI" lede="There is more than one way into AI. Compare five paths, see how much coding and maths each needs, and what to put in your portfolio first." crumbs={[{ label: 'Careers' }]} />
+  <div class="la-wrap">
+    <h2 class="la-visually-hidden">The five paths</h2>
+    <div class="la-grid la-paths">
+      {paths.map((p) => (
+        <article class="la-card la-path">
+          <h3><a href={url(`careers/${p.id}`)}>{p.data.title}</a></h3>
+          <p>{p.data.summary}</p>
+          <dl class="la-path__facts">
+            <div><dt>Coding</dt><dd>{LEVEL_WORD[p.data.coding]}</dd></div>
+            <div><dt>Maths</dt><dd>{LEVEL_WORD[p.data.maths]}</dd></div>
+          </dl>
+          <p class="la-meta">Job titles: {p.data.jobTitles.slice(0, 3).join(', ')}</p>
+        </article>
+      ))}
+    </div>
+    <section class="la-card la-notsure" aria-labelledby="h-notsure">
+      <h2 id="h-notsure">Not sure which path fits?</h2>
+      <p>Start with Level 1. Every path needs it. The roadmap questions will also suggest a path based on your background and goals.</p>
+      <p class="la-btn-row"><a class="la-btn la-btn--primary" href={url('learn/level-1')}>Start Level 1</a><a class="la-btn la-btn--secondary" href={url('roadmap')}>Build my roadmap</a></p>
+    </section>
+    <p class="la-meta la-note">Job titles and requirements vary between companies and countries. Always check real job postings where you want to work.</p>
+  </div>
+</BaseLayout>
+<style>
+  .la-paths { margin-top: var(--ji-s-6); }
+  .la-path { position: relative; display: flex; flex-direction: column; border-top: 6px solid var(--ji-brand); }
+  .la-path h3 a { color: var(--ji-ink); text-decoration: none; }
+  .la-path h3 a::after { content: ''; position: absolute; inset: 0; }
+  .la-path h3 a:hover { text-decoration: underline; }
+  .la-path:focus-within { outline: 3px solid var(--ji-focus); outline-offset: 2px; }
+  .la-path h3 a:focus-visible { outline: none; }
+  .la-path__facts { display: flex; gap: var(--ji-s-5); margin: 0 0 var(--ji-s-3); }
+  .la-path__facts dt { font-size: var(--ji-text-label); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ji-muted); }
+  .la-path__facts dd { margin: 0; font-weight: 700; }
+  .la-path .la-meta { margin: auto 0 0; }
+  .la-notsure { margin-top: var(--ji-s-7); max-width: 760px; border-left: 6px solid var(--ji-accent); }
+  .la-notsure h2 { margin-top: 0; }
+  .la-notsure .la-btn-row { margin: var(--ji-s-4) 0 0; }
+  .la-note { margin-top: var(--ji-s-5); }
+</style>

@@ -1,0 +1,23 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import Today from '../../components/today/Today.tsx';
+import { url } from '../../lib/site';
+import { getPractices, type PracticeData } from '../../lib/today/data';
+import '../../styles/today.css';
+
+export async function getStaticPaths() {
+  const practices = await getPractices();
+  return practices.map((p) => ({ params: { slug: p.id }, props: { practice: p } }));
+}
+const { practice } = Astro.props as { practice: PracticeData };
+---
+<BaseLayout title={practice.title} path={`practice/${practice.id}`} description={`A ${practice.minutes} minute AI practice. ${practice.task.outcome}`}>
+  <PageHeader eyebrow="Daily practice" title={practice.title} lede={practice.task.outcome} crumbs={[{ label: 'Daily practices', href: url('practice') }, { label: practice.title }]} />
+  <div class="la-wrap la-pr-page">
+    <Today client:load mode="single" practices={[practice]} helpHref={url('help')} allHref={url('practice')} roadmapHref={url('roadmap')} />
+  </div>
+</BaseLayout>
+<style>
+  .la-pr-page { margin-top: var(--ji-s-5); }
+</style>

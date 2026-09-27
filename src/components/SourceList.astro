@@ -1,0 +1,17 @@
+---
+interface Props { sources: { title: string; url: string }[]; heading?: string }
+const { sources, heading = 'Official help pages' } = Astro.props;
+---
+{sources.length > 0 && (
+  <section class="la-sources" aria-labelledby="la-sources-h">
+    <h2 id="la-sources-h">{heading}</h2>
+    <ul>
+      {sources.map((s) => (
+        <li><a href={s.url} rel="noopener noreferrer" target="_blank">{s.title}<span class="la-visually-hidden"> (opens in a new tab)</span></a> <span class="la-meta">{new URL(s.url).hostname.replace(/^www\./, '')}</span></li>
+      ))}
+    </ul>
+  </section>
+)}
+<style>
+  .la-sources ul { padding-left: 1.2em; display: grid; gap: 6px; }
+</style>

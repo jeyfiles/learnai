@@ -1,0 +1,17 @@
+---
+// Temporary panel for pages whose content arrives in a later build phase.
+interface Props { phase: string; what: string }
+const { phase, what } = Astro.props;
+---
+<section class="la-card la-soon" aria-labelledby="la-soon-title">
+  <p class="la-eyebrow">Being built · {phase}</p>
+  <h2 id="la-soon-title">This part is on the way</h2>
+  <p>{what}</p>
+  <slot />
+</section>
+
+<style>
+  .la-soon { margin-top: var(--ji-s-6); border-left: 6px solid var(--ji-brand); max-width: 760px; }
+  .la-soon h2 { margin-top: 0; }
+  .la-soon p:last-child { margin-bottom: 0; }
+</style>

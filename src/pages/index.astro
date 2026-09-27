@@ -1,0 +1,137 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LevelCard from '../components/LevelCard.astro';
+import { getCollection } from 'astro:content';
+import Today from '../components/today/Today.tsx';
+import { getPractices } from '../lib/today/data';
+import { LEVELS, url, SITE, absolute } from '../lib/site';
+import '../styles/today.css';
+
+const practices = await getPractices();
+
+const careers = (await getCollection('careers')).sort((a, b) => a.data.order - b.data.order);
+const CODE_WORD = { none: 'not needed', some: 'some', strong: 'strong' } as const;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Course',
+  name: SITE.name,
+  description: SITE.description,
+  url: absolute(''),
+  inLanguage: 'en',
+  isAccessibleForFree: true,
+  provider: { '@type': 'Person', name: SITE.author, url: 'https://jeyinsights.com/' },
+  audience: { '@type': 'Audience', audienceType: 'People building a career in AI' },
+  teaches: 'Practical AI skills for people building a career in AI',
+  hasCourseInstance: { '@type': 'CourseInstance', courseMode: 'online', courseWorkload: 'PT15M' },
+};
+---
+<BaseLayout title="Today" path="" jsonLd={jsonLd}>
+  <section class="la-hero" aria-labelledby="la-hero-title">
+    <div class="la-wrap la-hero__grid">
+      <div>
+        <p class="la-eyebrow la-hero__eyebrow">Your daily AI practice</p>
+        <h1 id="la-hero-title">Build real AI skills, <span class="la-mark">one task at a time</span></h1>
+        <p class="la-lede la-hero__lede">What you already know is your head start. Pick a tool, use it on a real task, follow each step, check the result, and keep the proof for your portfolio.</p>
+        <div class="la-btn-row">
+          <a class="la-btn la-btn--light" href={url('roadmap')}>Build my roadmap</a>
+          <a class="la-btn la-btn--outline-light" href={url('learn/level-1')}>Start Level 1</a>
+        </div>
+      </div>
+      <div class="la-card la-today" aria-labelledby="la-today-title">
+        <p class="la-eyebrow">Today's practice</p>
+        <h2 id="la-today-title">One short task, every day</h2>
+        <p>Each day you get one practice that takes 10 to 20 minutes. It comes with a worked example, a prompt you can copy and a quick check to see if you got it right.</p>
+        <p><a class="la-btn la-btn--primary" href="#today">Start today's practice</a></p>
+        <p class="la-meta">Free · No sign-up · Progress stays on your device</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="today" class="la-wrap la-today-section" aria-labelledby="la-today-section-title" tabindex="-1">
+    <h2 id="la-today-section-title">Today's practice</h2>
+    <Today client:load mode="today" practices={practices} helpHref={url('help')} allHref={url('practice')} roadmapHref={url('roadmap')} />
+    <noscript>
+      <div class="la-card">
+        <p>Today's practice needs JavaScript to pick a task and save your progress. You can still <a href={url('practice')}>open any of the daily practices</a>.</p>
+      </div>
+    </noscript>
+  </section>
+
+  <section class="la-wrap" aria-labelledby="la-how-title">
+    <h2 id="la-how-title">How Learn AI works</h2>
+    <ol class="la-steps">
+      <li class="la-card">
+        <span class="la-steps__num" aria-hidden="true">1</span>
+        <h3>Answer 10 quick questions</h3>
+        <p>Tell us your background, the AI path you are aiming for and how much time you have. You get a plan made for you.</p>
+      </li>
+      <li class="la-card">
+        <span class="la-steps__num" aria-hidden="true">2</span>
+        <h3>Follow short lessons</h3>
+        <p>Each lesson shows you where to click, gives you a prompt to copy and tells you what a good result looks like.</p>
+      </li>
+      <li class="la-card">
+        <span class="la-steps__num" aria-hidden="true">3</span>
+        <h3>Build your portfolio</h3>
+        <p>Every lesson ends with proof you can save: a scored comparison, a paper explainer, a working assistant. Together they become your portfolio.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section class="la-wrap" aria-labelledby="la-levels-title">
+    <h2 id="la-levels-title">Five levels, one step at a time</h2>
+    <p class="la-prose">Everyone starts with the basics. Level 1 is ready now, with 10 lessons, and Level 3 has its first two lessons on Canva and ElevenLabs. The other levels will open one by one.</p>
+    <div class="la-grid">
+      {LEVELS.map((level) => <LevelCard level={level} />)}
+    </div>
+  </section>
+
+  <section class="la-wrap" aria-labelledby="la-paths-title">
+    <h2 id="la-paths-title">Pick your path into AI</h2>
+    <p class="la-prose">There is more than one way into AI. Some paths need no coding at all.</p>
+    <ul class="la-paths-list">
+      {careers.map((c) => (
+        <li><a href={url(`careers/${c.id}`)}><span class="la-paths-list__name">{c.data.title}</span><span class="la-paths-list__code">Coding: {CODE_WORD[c.data.coding]}</span></a></li>
+      ))}
+    </ul>
+    <p><a href={url('careers')}>Compare all five paths</a></p>
+  </section>
+
+  <section class="la-wrap" aria-labelledby="la-for-title">
+    <h2 id="la-for-title">Who this is for</h2>
+    <div class="la-for la-prose">
+      <p>Anyone building a career in AI: students in any subject, developers, people changing careers, and professionals who want to become the AI expert in their field. You do not need to know how to code to start.</p>
+      <p>It is free, there is nothing to sign up for, and your progress is saved only on your device.</p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .la-hero { background: var(--ji-band); color: var(--ji-on-band); position: relative; overflow: hidden; }
+  .la-hero::after { content: ''; position: absolute; right: -140px; top: -140px; width: 380px; height: 380px; border-radius: 50%; border: 44px solid rgba(255, 255, 255, .08); pointer-events: none; }
+  .la-hero__grid { display: grid; gap: var(--ji-s-6); align-items: center; padding-block: var(--ji-s-7); position: relative; z-index: 1; }
+  @media (min-width: 900px) { .la-hero__grid { grid-template-columns: 1.45fr 1fr; padding-block: var(--ji-s-8); } }
+  .la-hero h1 { color: inherit; margin-bottom: var(--ji-s-4); }
+  .la-hero__eyebrow, .la-hero__lede { color: inherit; }
+  .la-hero .la-mark { color: inherit; }
+  .la-btn--light { background: var(--ji-band-btn-bg); color: var(--ji-band-btn-ink); }
+  .la-btn--light:hover { background: var(--ji-band-btn-hover); }
+  .la-btn--outline-light { color: var(--ji-on-band); border-color: var(--ji-band-outline); }
+  .la-btn--outline-light:hover { background: rgba(255, 255, 255, .12); }
+  .la-today { color: var(--ji-ink); }
+  .la-today h2 { margin-top: 0; font-size: var(--ji-text-h3); }
+  .la-today .la-eyebrow { color: var(--ji-l2); }
+  .la-today p:last-child { margin-bottom: 0; }
+  .la-today-section { scroll-margin-top: var(--ji-s-5); }
+  .la-today-section:focus { outline: none; }
+
+  .la-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--ji-s-4); grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
+  .la-steps__num { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--ji-brand); color: #FFFFFF; font-family: var(--ji-font-head); font-size: 1.25rem; margin-bottom: var(--ji-s-3); }
+  .la-steps p { margin-bottom: 0; }
+  .la-paths-list { list-style: none; margin: var(--ji-s-4) 0; padding: 0; display: grid; gap: var(--ji-s-3); grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
+  .la-paths-list a { display: flex; flex-direction: column; gap: 2px; padding: var(--ji-s-4); background: var(--ji-surface); border: 1px solid var(--ji-line); border-left: 6px solid var(--ji-brand); border-radius: var(--ji-r-md); text-decoration: none; color: var(--ji-ink); }
+  .la-paths-list a:hover { border-color: var(--ji-line-strong); border-left-color: var(--ji-primary); }
+  .la-paths-list__name { font-weight: 700; }
+  .la-paths-list__code { font-size: var(--ji-text-sm); color: var(--ji-muted); }
+</style>

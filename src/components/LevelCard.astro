@@ -1,0 +1,31 @@
+---
+import type { LevelInfo } from '../lib/site';
+import { url } from '../lib/site';
+
+interface Props { level: LevelInfo; headingLevel?: 'h2' | 'h3'; to?: 'overview' | 'lessons' }
+const { level, headingLevel = 'h3', to = 'overview' } = Astro.props;
+const href = to === 'lessons' ? url(`learn/level-${level.number}`) : url(`levels/${level.slug}`);
+const H = headingLevel;
+const STATUS = { open: 'Ready now', partial: 'First lessons ready', 'coming-soon': 'Coming later' } as const;
+---
+<article class="la-card la-level" style={`--lvl: var(--ji-l${level.number})`}>
+  <p class="la-level__num">Level {level.number}</p>
+  <H class="la-level__title">
+    <a href={href}>{level.title}</a>
+  </H>
+  <p>{level.summary}</p>
+  <p class="la-meta">{STATUS[level.status]}</p>
+</article>
+
+<style>
+  .la-level { position: relative; padding-top: calc(var(--ji-s-5) + 8px); overflow: hidden; display: flex; flex-direction: column; }
+  .la-level::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 8px; background: var(--lvl); }
+  .la-level__num { font-size: var(--ji-text-label); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--lvl); margin-bottom: var(--ji-s-2); }
+  .la-level__title { font-size: var(--ji-text-h3); margin: 0 0 var(--ji-s-2); }
+  .la-level__title a { color: var(--ji-ink); text-decoration: none; }
+  .la-level__title a::after { content: ''; position: absolute; inset: 0; }
+  .la-level__title a:hover { text-decoration: underline; }
+  .la-level:focus-within { outline: 3px solid var(--ji-focus); outline-offset: 2px; }
+  .la-level__title a:focus-visible { outline: none; }
+  .la-level .la-meta { margin: auto 0 0; }
+</style>

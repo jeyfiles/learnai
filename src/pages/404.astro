@@ -1,0 +1,23 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import BrandBadge from '../components/BrandBadge.astro';
+import { url } from '../lib/site';
+---
+<BaseLayout title="Page not found" path="404.html" noindex description="This Learn AI page could not be found. Try search, or go back to today's practice and the lessons.">
+  <section class="la-wrap la-404">
+    <BrandBadge size={120} />
+    <p class="la-eyebrow">Error 404</p>
+    <h1>We could not find that page</h1>
+    <p class="la-lede">The link may be old, or the page may have moved. Try one of these instead.</p>
+    <ul class="la-404__links">
+      <li><a class="la-btn la-btn--primary" href={url()}>Go to today's practice</a></li>
+      <li><a class="la-btn la-btn--secondary" href={url('learn')}>Browse lessons</a></li>
+      <li><a class="la-btn la-btn--secondary" href={url('help')}>Get help</a></li>
+    </ul>
+  </section>
+</BaseLayout>
+<style>
+  .la-404 { padding-block: var(--ji-s-8); text-align: center; }
+  .la-404 .la-lede { margin-inline: auto; }
+  .la-404__links { list-style: none; padding: 0; margin: var(--ji-s-5) 0 0; display: flex; flex-wrap: wrap; justify-content: center; gap: var(--ji-s-3); }
+</style>

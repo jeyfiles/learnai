@@ -1,0 +1,209 @@
+---
+import { render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import LessonCard from '../../components/LessonCard.astro';
+import BuildTabs from '../../components/BuildTabs.astro';
+import MarkComplete from '../../components/MarkComplete.astro';
+import SourceList from '../../components/SourceList.astro';
+import { LEVELS, PATHS, url, absolute, SITE, type LevelInfo } from '../../lib/site';
+import { getLessons, slugOf, pathList, FREE_TIER_LABEL, type Lesson } from '../../lib/content';
+
+export async function getStaticPaths() {
+  const lessons = await getLessons();
+  const levelPages = LEVELS.map((level) => ({
+    params: { slug: `level-${level.number}` },
+    props: { kind: 'level' as const, level, lessons: lessons.filter((l) => l.data.level === level.number) },
+  }));
+  const lessonPages = lessons.map((lesson, i) => {
+    const same = lessons.filter((l) => l.data.level === lesson.data.level);
+    const j = same.indexOf(lesson);
+    return {
+      params: { slug: slugOf(lesson.id) },
+      props: { kind: 'lesson' as const, lesson, prev: same[j - 1], next: same[j + 1] },
+    };
+  });
+  return [...levelPages, ...lessonPages];
+}
+
+type Props =
+  | { kind: 'level'; level: LevelInfo; lessons: Lesson[] }
+  | { kind: 'lesson'; lesson: Lesson; prev?: Lesson; next?: Lesson };
+
+const props = Astro.props as Props;
+const lesson = props.kind === 'lesson' ? props.lesson : null;
+const { Content } = lesson ? await render(lesson) : { Content: null };
+const level = props.kind === 'level' ? props.level : LEVELS.find((l) => l.number === lesson!.data.level)!;
+const tools = props.kind === 'level' ? [...new Set(props.lessons.map((l) => l.data.tool))] : [];
+---
+{props.kind === 'level' ? (
+  <BaseLayout title={`Level ${level.number} lessons: ${level.title}`} path={`learn/level-${level.number}`} description={`Level ${level.number} of JeyInsights Learn AI: ${level.summary}`}>
+    <PageHeader eyebrow={`Level ${level.number}`} title={level.title} lede={level.summary}
+      crumbs={[{ label: 'Lessons', href: url('learn') }, { label: `Level ${level.number}` }]} />
+    <div class="la-wrap">
+      {props.lessons.length > 0 ? (
+        <>
+          <form class="la-filters la-no-print" data-lesson-filters data-js-only aria-label="Filter lessons">
+            <div>
+              <label for="f-tool">Tool</label>
+              <select id="f-tool" name="tool">
+                <option value="">All tools</option>
+                {tools.map((t) => <option value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div>
+              <label for="f-who">My path</label>
+              <select id="f-who" name="who">
+                <option value="">All paths</option>
+                {PATHS.map((t) => <option value={t.id}>{t.label}</option>)}
+              </select>
+            </div>
+            <p class="la-meta" role="status" data-count>{props.lessons.length} lessons</p>
+          </form>
+          <h2 class="la-visually-hidden">Lessons in this level</h2>
+          <div class="la-grid la-lesson-grid">
+            {props.lessons.map((l) => <LessonCard lesson={l} />)}
+          </div>
+          <p class="la-empty" hidden data-empty>No lessons match these filters. Try "All tools" or "All paths".</p>
+          <p class="la-level-link"><a href={url(`levels/${level.slug}`)}>What Level {level.number} covers, and what to show before moving on</a></p>
+          {level.number === 1 && <p class="la-level-link"><a href={url('certificate')}>Finish every Level 1 lesson to get your certificate</a></p>}
+        </>
+      ) : (
+        <section class="la-card la-soon-card">
+          <p class="la-eyebrow">Coming later</p>
+          <h2>Level {level.number} lessons are being written</h2>
+          <p>They will open after Level 1. Read the overview to see what this level will cover.</p>
+          <p><a href={url(`levels/${level.slug}`)}>Read the Level {level.number} overview</a></p>
+        </section>
+      )}
+    </div>
+  </BaseLayout>
+) : (
+  <BaseLayout title={lesson!.data.title} path={`learn/${slugOf(lesson!.id)}`} ogType="article" description={lesson!.data.summary}
+    jsonLd={{
+      '@context': 'https://schema.org', '@type': 'LearningResource', name: lesson!.data.title, description: lesson!.data.summary,
+      url: absolute(`learn/${slugOf(lesson!.id)}`), inLanguage: 'en', isAccessibleForFree: true, timeRequired: `PT${lesson!.data.minutes}M`,
+      educationalLevel: `Level ${lesson!.data.level}`, dateModified: lesson!.data.lastReviewed.toISOString().slice(0, 10),
+      author: { '@type': 'Person', name: SITE.author }, isPartOf: { '@type': 'Course', name: SITE.name, url: absolute('') },
+    }}>
+    <PageHeader eyebrow={`Level ${level.number} · ${lesson!.data.tool}`} title={lesson!.data.title} lede={lesson!.data.summary}
+      crumbs={[{ label: 'Lessons', href: url('learn') }, { label: `Level ${level.number}`, href: url(`learn/level-${level.number}`) }, { label: lesson!.data.title }]}>
+      <dl class="la-facts">
+        <div><dt>Time</dt><dd>About {lesson!.data.minutes} minutes</dd></div>
+        <div><dt>Best for</dt><dd>{pathList(lesson!.data.paths)}</dd></div>
+        <div><dt>Cost</dt><dd>{FREE_TIER_LABEL[lesson!.data.freeTier.status]}</dd></div>
+      </dl>
+    </PageHeader>
+
+    <div class="la-wrap la-lesson">
+      <aside class="la-callout" aria-label="Before you start">
+        <p><strong>Access:</strong> {lesson!.data.access}</p>
+        <p><strong>Free plan:</strong> {lesson!.data.freeTier.note}</p>
+      </aside>
+
+      {lesson!.data.reviewNotes.length > 0 && (
+        <aside class="la-callout la-callout--check" aria-label="Good to know">
+          <p><strong>Good to know:</strong> AI tools update their screens often, so some buttons and menus may look a little different from these steps.</p>
+          <ul>{lesson!.data.reviewNotes.map((n) => <li>{n}</li>)}</ul>
+          <p>If something does not match, look for the closest option, or open the official help pages at the end of this lesson.</p>
+        </aside>
+      )}
+
+      <section aria-labelledby="h-start">
+        <h2 id="h-start">Where to start</h2>
+        <ol class="la-start">{lesson!.data.whereToStart.map((s) => <li>{s}</li>)}</ol>
+        {lesson!.data.toolUrl && <p><a href={lesson!.data.toolUrl} rel="noopener noreferrer" target="_blank">Open {lesson!.data.tool}<span class="la-visually-hidden"> (opens in a new tab)</span></a></p>}
+      </section>
+
+      <section aria-labelledby="h-learn">
+        <h2 id="h-learn">Understand it first</h2>
+        <div class="la-grid la-learn">
+          {lesson!.data.learn.map((l) => (
+            <div class="la-card"><h3>{l.title}</h3><p>{l.text}</p></div>
+          ))}
+        </div>
+      </section>
+
+      <section aria-labelledby="h-builds">
+        <h2 id="h-builds">Choose your practice</h2>
+        <p>Pick the build that fits you best. Each one uses the same skills on a different task.</p>
+        <BuildTabs builds={lesson!.data.builds} />
+      </section>
+
+      {Content && <div class="la-tip"><h2 class="la-visually-hidden">Tip</h2><Content /></div>}
+
+      <MarkComplete item={`lesson:${slugOf(lesson!.id)}`} />
+
+      <SourceList sources={lesson!.data.sources} />
+
+      <nav class="la-pager la-no-print" aria-label="More lessons">
+        {props.kind === 'lesson' && props.prev && <a class="la-pager__prev" href={url(`learn/${slugOf(props.prev.id)}`)}><span>Previous lesson</span>{props.prev.data.title}</a>}
+        {props.kind === 'lesson' && props.next && <a class="la-pager__next" href={url(`learn/${slugOf(props.next.id)}`)}><span>Next lesson</span>{props.next.data.title}</a>}
+      </nav>
+    </div>
+  </BaseLayout>
+)}
+
+<script>
+  import { getProgress } from '../../lib/storage';
+  const done = new Set(getProgress().done);
+  document.querySelectorAll<HTMLElement>('[data-lesson-card]').forEach((card) => {
+    const chip = card.querySelector<HTMLElement>('[data-done-chip]');
+    if (chip && done.has(card.dataset.item!)) chip.hidden = false;
+  });
+  const form = document.querySelector<HTMLFormElement>('[data-lesson-filters]');
+  if (form) {
+
+    const cards = [...document.querySelectorAll<HTMLElement>('[data-lesson-card]')];
+    const count = form.querySelector<HTMLElement>('[data-count]')!;
+    const empty = document.querySelector<HTMLElement>('[data-empty]')!;
+    const apply = () => {
+      const tool = (form.elements.namedItem('tool') as HTMLSelectElement).value;
+      const who = (form.elements.namedItem('who') as HTMLSelectElement).value;
+      let n = 0;
+      cards.forEach((c) => {
+        const learners = (c.dataset.paths ?? '').split(' ');
+        const show = (!tool || c.dataset.tool === tool) && (!who || learners.includes(who) || learners.includes('all'));
+        c.hidden = !show;
+        if (show) n++;
+      });
+      count.textContent = `${n} ${n === 1 ? 'lesson' : 'lessons'}`;
+      empty.hidden = n > 0;
+    };
+    form.addEventListener('change', apply);
+  }
+</script>
+
+<style>
+  .la-filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--ji-s-4); margin: var(--ji-s-6) 0 var(--ji-s-5); }
+  .la-filters[hidden] { display: none; }
+  .la-filters label { display: block; font-weight: 700; font-size: var(--ji-text-sm); margin-bottom: 4px; }
+  .la-filters > div { min-width: 0; max-width: 100%; }
+  .la-filters select { max-width: 100%; font: inherit; min-height: 44px; padding: 8px 12px; border: 2px solid var(--ji-line-strong); border-radius: var(--ji-r-md); background: var(--ji-surface); color: var(--ji-ink); }
+  .la-filters p { margin: 0 0 10px; }
+  .la-lesson-grid { margin-top: var(--ji-s-5); }
+  .la-lesson-grid :global([hidden]) { display: none; }
+  .la-empty { margin-top: var(--ji-s-4); }
+  .la-level-link { margin-top: var(--ji-s-6); }
+  .la-soon-card { margin-top: var(--ji-s-6); max-width: 760px; border-left: 6px solid var(--ji-brand); }
+  .la-soon-card h2 { margin-top: 0; }
+
+  .la-facts { display: flex; flex-wrap: wrap; gap: var(--ji-s-3) var(--ji-s-6); margin: var(--ji-s-5) 0 0; }
+  .la-facts dt { font-size: var(--ji-text-label); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ji-muted); }
+  .la-facts dd { margin: 0; font-weight: 700; }
+  .la-lesson > * { max-width: 860px; }
+  .la-callout { margin-top: var(--ji-s-6); padding: var(--ji-s-4) var(--ji-s-5); border-radius: var(--ji-r-md); background: var(--ji-surface); border: 1px solid var(--ji-line); border-left: 6px solid var(--ji-brand); }
+  .la-callout > :last-child { margin-bottom: 0; }
+  .la-callout--warn { border-left-color: var(--ji-accent); background: var(--ji-accent-soft); }
+  .la-callout--check { border-left-color: var(--ji-l4); }
+  .la-start { padding-left: 1.3em; display: grid; gap: 6px; }
+  .la-learn h3 { font-size: 1.1875rem; }
+  .la-learn p { margin: 0; }
+  .la-tip { margin-top: var(--ji-s-5); padding: var(--ji-s-4) var(--ji-s-5); background: var(--ji-surface-2); border-radius: var(--ji-r-md); }
+  .la-tip :global(p:last-child) { margin-bottom: 0; }
+  .la-pager { display: grid; gap: var(--ji-s-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); margin-top: var(--ji-s-7); }
+  .la-pager a { display: block; padding: var(--ji-s-4); border: 1px solid var(--ji-line); border-radius: var(--ji-r-md); background: var(--ji-surface); text-decoration: none; color: var(--ji-ink); font-weight: 700; }
+  .la-pager a:hover { border-color: var(--ji-line-strong); }
+  .la-pager span { display: block; font-size: var(--ji-text-sm); font-weight: 400; color: var(--ji-muted); }
+  .la-pager__next { text-align: right; grid-column: -2; }
+</style>

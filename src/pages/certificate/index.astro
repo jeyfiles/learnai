@@ -1,0 +1,165 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import { url, LEVELS } from '../../lib/site';
+import { getLessons, slugOf } from '../../lib/content';
+
+const lessons = (await getLessons(1)).map((l) => ({ slug: slugOf(l.id), title: l.data.title }));
+const level = LEVELS[0];
+const fonts = { head: url('fonts/oswald-latin-var.woff2'), body: url('fonts/atkinson-next-latin-var.woff2') };
+---
+<BaseLayout title="Certificate" path="certificate" description="Get a certificate with your name when you finish every Level 1 lesson of JeyInsights Learn AI. Print it, save it as a PDF or download it as an image.">
+  <PageHeader eyebrow="Level 1" title="Your Level 1 certificate" lede={`Finish all ${lessons.length} Level 1 lessons and you can put your name on a certificate. Print it, save it as a PDF or download it as an image.`} crumbs={[{ label: 'Certificate' }]} />
+  <div class="la-wrap la-cert" data-cert data-level-title={level.title} data-font-head={fonts.head} data-font-body={fonts.body}>
+    <noscript><p class="la-card">The certificate needs JavaScript, because your progress is saved in this browser.</p></noscript>
+
+    <section class="la-card la-cert__progress" aria-labelledby="cert-progress-h" data-cert-progress hidden>
+      <h2 id="cert-progress-h">Not ready yet</h2>
+      <p data-cert-count></p>
+      <div class="la-cert__bar" aria-hidden="true"><i data-cert-bar></i></div>
+      <h3>Lessons still to finish</h3>
+      <ul class="la-cert__todo">
+        {lessons.map((l) => <li data-lesson={l.slug}><a href={url(`learn/${l.slug}`)}>{l.title}</a></li>)}
+      </ul>
+      <p class="la-meta">Mark each lesson as done at the end of the lesson page. Progress is saved only in this browser, so use the same device you learned on.</p>
+    </section>
+
+    <section class="la-cert__ready" aria-labelledby="cert-ready-h" data-cert-ready hidden>
+      <h2 id="cert-ready-h">Well done. You finished Level 1.</h2>
+      <form class="la-cert__form" data-cert-form novalidate>
+        <label for="cert-name">Your name, as it should appear</label>
+        <p class="la-meta" id="cert-name-help">Nothing is sent anywhere. Your name is only used to draw the certificate on this page.</p>
+        <input id="cert-name" name="name" type="text" autocomplete="name" maxlength="60" aria-describedby="cert-name-help cert-name-err" />
+        <p class="la-cert__err" id="cert-name-err" role="alert" data-cert-err></p>
+        <button class="la-btn la-btn--primary" type="submit">Show my certificate</button>
+      </form>
+
+      <div class="la-cert__output" data-cert-output hidden>
+        <div class="la-cert__sheet" data-cert-sheet></div>
+        <div class="la-btn-row la-no-print">
+          <button class="la-btn la-btn--primary" type="button" data-cert-print>Print or save as PDF</button>
+          <button class="la-btn la-btn--secondary" type="button" data-cert-png>Download as image (PNG)</button>
+        </div>
+        <p class="la-meta la-no-print" role="status" data-cert-status></p>
+        <p class="la-meta la-no-print">To save a PDF, choose "Save as PDF" as the printer. Set the layout to landscape if your browser asks.</p>
+      </div>
+
+      <div class="la-card la-cert__honest la-no-print">
+        <h3>What this certificate shows</h3>
+        <p>It shows that you marked every Level 1 lesson as done on this device. Nobody checked your work, so an employer will care more about your portfolio than about this page. Put the certificate next to your Level 1 portfolio pieces, not instead of them.</p>
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<script>
+  import { getProgress, getProfile } from '../../lib/storage';
+  import { certificateSvg, checkName, cleanName, formatCertDate, CERT_W, CERT_H } from '../../lib/certificate';
+
+  const root = document.querySelector<HTMLElement>('[data-cert]')!;
+  const done = new Set(getProgress().done);
+  const items = [...root.querySelectorAll<HTMLElement>('[data-lesson]')];
+  const finished = items.filter((li) => done.has(`lesson:${li.dataset.lesson}`));
+  const total = items.length;
+
+  if (finished.length < total) {
+    const progress = root.querySelector<HTMLElement>('[data-cert-progress]')!;
+    finished.forEach((li) => li.remove());
+    root.querySelector('[data-cert-count]')!.textContent = `You have finished ${finished.length} of ${total} Level 1 lessons.`;
+    root.querySelector<HTMLElement>('[data-cert-bar]')!.style.width = `${Math.round((finished.length / total) * 100)}%`;
+    progress.hidden = false;
+  } else {
+    const ready = root.querySelector<HTMLElement>('[data-cert-ready]')!;
+    ready.hidden = false;
+    const form = root.querySelector<HTMLFormElement>('[data-cert-form]')!;
+    const input = form.querySelector<HTMLInputElement>('#cert-name')!;
+    const err = root.querySelector<HTMLElement>('[data-cert-err]')!;
+    const output = root.querySelector<HTMLElement>('[data-cert-output]')!;
+    const sheet = root.querySelector<HTMLElement>('[data-cert-sheet]')!;
+    const status = root.querySelector<HTMLElement>('[data-cert-status]')!;
+    const levelTitle = root.dataset.levelTitle!;
+    const date = formatCertDate(new Date());
+    const saved = getProfile<{ name?: string }>()?.answers?.name;
+    if (saved) input.value = saved;
+    let name = '';
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const msg = checkName(input.value);
+      err.textContent = msg;
+      input.setAttribute('aria-invalid', String(!!msg));
+      if (msg) { input.focus(); return; }
+      name = cleanName(input.value);
+      sheet.innerHTML = certificateSvg({ name, date, levelTitle, lessonCount: total });
+      output.hidden = false;
+      status.textContent = 'Your certificate is ready below.';
+      sheet.scrollIntoView({ block: 'nearest' });
+    });
+
+    root.querySelector('[data-cert-print]')!.addEventListener('click', () => window.print());
+
+    const toDataUrl = (blob: Blob) => new Promise<string>((res, rej) => {
+      const r = new FileReader(); r.onload = () => res(r.result as string); r.onerror = rej; r.readAsDataURL(blob);
+    });
+
+    root.querySelector('[data-cert-png]')!.addEventListener('click', async () => {
+      status.textContent = 'Making your image.';
+      try {
+        // Embed the two fonts, because an SVG drawn as an image cannot use the page's fonts.
+        const [head, body] = await Promise.all([root.dataset.fontHead!, root.dataset.fontBody!].map((u) => fetch(u).then((r) => r.blob()).then(toDataUrl)));
+        const fontCss = `@font-face{font-family:'Oswald';src:url(${head}) format('woff2');font-weight:200 700}` +
+          `@font-face{font-family:'Atkinson Hyperlegible Next';src:url(${body}) format('woff2');font-weight:200 800}`;
+        const svg = certificateSvg({ name, date, levelTitle, lessonCount: total, fontCss });
+        const img = new Image();
+        img.src = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
+        await img.decode();
+        const scale = 1.5;
+        const canvas = document.createElement('canvas');
+        canvas.width = CERT_W * scale; canvas.height = CERT_H * scale;
+        const ctx = canvas.getContext('2d')!;
+        ctx.scale(scale, scale);
+        ctx.drawImage(img, 0, 0, CERT_W, CERT_H);
+        URL.revokeObjectURL(img.src);
+        const png = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/png'));
+        if (!png) throw new Error('no image');
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(png);
+        a.download = 'learnai-level-1-certificate.png';
+        document.body.append(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+        status.textContent = 'Image downloaded. Look in your downloads folder.';
+      } catch {
+        status.textContent = 'The image could not be made in this browser. Use "Print or save as PDF" instead.';
+      }
+    });
+  }
+</script>
+
+<style>
+  /* Room for the progress or name form, which appear once saved progress is read, so the footer does not jump. */
+  .la-cert { margin-top: var(--ji-s-6); min-height: 640px; }
+  .la-cert > * { max-width: 960px; }
+  .la-cert__progress h2, .la-cert__ready > h2 { margin-top: 0; }
+  .la-cert__bar { height: 12px; background: var(--ji-surface-2); border-radius: 99px; overflow: hidden; margin-bottom: var(--ji-s-5); }
+  .la-cert__bar i { display: block; height: 100%; background: var(--ji-primary); }
+  .la-cert__todo { padding-left: 1.2em; }
+  .la-cert__form { display: grid; gap: var(--ji-s-2); max-width: 520px; margin-bottom: var(--ji-s-5); }
+  .la-cert__form label { font-weight: 700; }
+  .la-cert__form p { margin: 0; }
+  .la-cert__form input { font: inherit; min-height: 48px; padding: 10px 14px; border: 2px solid var(--ji-line-strong); border-radius: var(--ji-r-md); background: var(--ji-surface); color: var(--ji-ink); }
+  .la-cert__form button { justify-self: start; margin-top: var(--ji-s-2); }
+  .la-cert__err { color: var(--ji-danger); font-weight: 700; min-height: 0; }
+  .la-cert__err:empty { display: none; }
+  .la-cert__sheet { border: 1px solid var(--ji-line); border-radius: var(--ji-r-md); overflow: hidden; background: #FBFAF6; margin-bottom: var(--ji-s-4); }
+  .la-cert__sheet :global(svg) { display: block; width: 100%; height: auto; }
+  .la-cert__honest { margin-top: var(--ji-s-6); }
+  .la-cert__honest h3 { margin-top: 0; }
+
+  @media print {
+    @page { size: A4 landscape; margin: 0; }
+    :global(body *) { visibility: hidden; }
+    .la-cert__sheet, .la-cert__sheet :global(*) { visibility: visible; }
+    .la-cert__sheet { position: fixed; inset: 0; border: 0; border-radius: 0; margin: 0; }
+    :global(body) { padding: 0 !important; }
+  }
+</style>

@@ -1,0 +1,94 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import StepList from '../../components/StepList.astro';
+import MarkComplete from '../../components/MarkComplete.astro';
+import SourceList from '../../components/SourceList.astro';
+import ProjectLock from '../../components/ProjectLock.astro';
+import { url } from '../../lib/site';
+import { getProjects, slugOf, pathLabel, type Project } from '../../lib/content';
+
+export async function getStaticPaths() {
+  const all = await getProjects();
+  return all.map((p) => ({ params: { slug: slugOf(p.id) }, props: { p } }));
+}
+interface Props { p: Project }
+const { p } = Astro.props;
+const d = p.data;
+const slug = slugOf(p.id);
+const hours = (m: number) => (m % 60 ? (m / 60).toFixed(1) : String(m / 60));
+---
+<BaseLayout title={d.title} path={`projects/${slug}`} ogType="article" description={d.promise}>
+  <PageHeader eyebrow={`Project · ${pathLabel(d.path)}`} title={d.title} lede={d.promise}
+    crumbs={[{ label: 'Projects', href: url('projects') }, { label: d.title }]}>
+    <dl class="la-facts">
+      <div><dt>Time</dt><dd>About {hours(d.minutes)} hours</dd></div>
+      <div><dt>Level</dt><dd>{d.level}</dd></div>
+      <div><dt>Tools</dt><dd>{d.tools.join(', ')}</dd></div>
+    </dl>
+  </PageHeader>
+  <div class="la-wrap la-proj">
+    <section aria-labelledby="h-scenario">
+      <h2 id="h-scenario">The situation</h2>
+      <p>{d.scenario}</p>
+    </section>
+    <section aria-labelledby="h-outcome" class="la-card la-outcome">
+      <h2 id="h-outcome">You will finish with</h2>
+      <p>{d.outcome}</p>
+    </section>
+
+    <ProjectLock />
+
+    <div data-la-locked>
+      <section aria-labelledby="h-before">
+        <h2 id="h-before">Before you start</h2>
+        <ul>{d.beforeYouStart.map((b) => <li>{b}</li>)}</ul>
+      </section>
+
+      <section aria-labelledby="h-steps" class="la-proj__steps">
+        <h2 id="h-steps">Steps</h2>
+        <StepList steps={d.steps} />
+      </section>
+
+      <section aria-labelledby="h-tests" class="la-card">
+        <h2 id="h-tests">Test your work</h2>
+        <p>Run these checks yourself before you call the project done.</p>
+        <dl class="la-tests">
+          {d.tests.map((t) => (<div><dt>{t.name}</dt><dd>{t.expected}</dd></div>))}
+        </dl>
+      </section>
+
+      <section aria-labelledby="h-safety" class="la-card la-safety">
+        <h2 id="h-safety">Stay safe and honest</h2>
+        <ul>{d.safety.map((s) => <li>{s}</li>)}</ul>
+      </section>
+
+      <section aria-labelledby="h-proof" class="la-card">
+        <h2 id="h-proof">Save for your portfolio</h2>
+        <ul>{d.proof.map((x) => <li>{x}</li>)}</ul>
+        <p class="la-meta">Add a three line case study to <a href={url('workbooks/build-your-ai-portfolio-page')}>your portfolio page</a>: the problem, what you did and the result.</p>
+      </section>
+
+      <MarkComplete item={`project:${slug}`} label="Mark this project as done" />
+      <SourceList sources={d.sources} />
+    </div>
+  </div>
+</BaseLayout>
+<style>
+  .la-facts { display: flex; flex-wrap: wrap; gap: var(--ji-s-3) var(--ji-s-6); margin: var(--ji-s-5) 0 0; }
+  .la-facts dt { font-size: var(--ji-text-label); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ji-muted); }
+  .la-facts dd { margin: 0; font-weight: 700; }
+  .la-proj { margin-top: var(--ji-s-6); }
+  .la-proj > *, .la-proj [data-la-locked] > * { max-width: 860px; }
+  .la-proj > .la-lock { margin-top: var(--ji-s-6); }
+  .la-outcome { margin-top: var(--ji-s-5); border-left: 6px solid var(--ji-brand); }
+  .la-outcome h2 { margin-top: 0; font-size: var(--ji-text-h3); }
+  .la-outcome p { margin: 0; }
+  .la-proj__steps { margin-top: var(--ji-s-7); }
+  section.la-card { margin-top: var(--ji-s-7); }
+  section.la-card h2 { margin-top: 0; }
+  .la-tests { margin: 0; display: grid; gap: var(--ji-s-3); }
+  .la-tests dt { font-weight: 700; }
+  .la-tests dd { margin: 2px 0 0; }
+  .la-safety { border-left: 6px solid var(--ji-accent); }
+</style>

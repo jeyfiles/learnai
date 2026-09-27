@@ -1,0 +1,12 @@
+---
+// Shown instead of project steps until the learner has built a roadmap. Hidden when the roadmap is done.
+import { url } from '../lib/site';
+interface Props { headingLevel?: 'h2' | 'h3' }
+const { headingLevel = 'h2' } = Astro.props;
+const H = headingLevel;
+---
+<div class="la-lock" data-la-lock-notice role="note" aria-labelledby="la-lock-h">
+  <H id="la-lock-h">Projects open after you build your roadmap</H>
+  <p>Answer 10 short questions first. It takes about five minutes, and then you will see the projects that fit your path first. Your answers stay on this device.</p>
+  <p><a class="la-btn la-btn--primary" href={url('roadmap')}>Build my roadmap</a></p>
+</div>

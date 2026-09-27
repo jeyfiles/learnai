@@ -1,0 +1,16 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import LevelCard from '../../components/LevelCard.astro';
+import { LEVELS } from '../../lib/site';
+---
+<BaseLayout title="The five levels" path="levels" description="The five levels of JeyInsights Learn AI, from first questions to building and sharing your own AI project, with what you should be able to show at each step.">
+  <PageHeader eyebrow="The big picture" title="The five levels" lede="Each level builds on the one before. Before you move up, you show a small piece of work that proves you can do the skill, not just read about it." crumbs={[{ label: 'The five levels' }]} />
+  <div class="la-wrap">
+    <h2 class="la-visually-hidden">All levels</h2>
+    <div class="la-grid la-levels">
+      {LEVELS.map((level) => <LevelCard level={level} />)}
+    </div>
+  </div>
+</BaseLayout>
+<style>.la-levels { margin-top: var(--ji-s-6); }</style>

@@ -1,0 +1,20 @@
+--- wrangler.toml (now)
++++ wrangler.toml (new)
+@@ -1,6 +1,13 @@
+ name = "jeyinsights"
+ main = "worker.js"
+-compatibility_date = "2024-09-23"
++compatibility_date = "2026-09-01"
+ 
+-[site]
+-bucket = "."
+\ No newline at end of file
++# Workers Static Assets. Replaces the old [site] setting, which Wrangler 4 no longer supports.
++# The Worker already calls env.ASSETS, which only exists with this setting.
++# Everything in ./public is published. Files outside it (worker.js, this file, README.md,
++# LICENSE, .git) are not.
++[assets]
++directory = "./public"
++binding = "ASSETS"
++html_handling = "auto-trailing-slash"
++not_found_handling = "none"

@@ -1,0 +1,67 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import ProjectLock from '../../components/ProjectLock.astro';
+import { url, PATHS } from '../../lib/site';
+import { getProjects, slugOf } from '../../lib/content';
+
+const projects = await getProjects();
+const groups = PATHS.map((p) => ({ ...p, items: projects.filter((x) => x.data.path === p.id) })).filter((g) => g.items.length);
+const hours = (m: number) => (m % 60 ? (m / 60).toFixed(1) : String(m / 60));
+---
+<BaseLayout title="Projects" path="projects" description="Portfolio projects for each AI career path, with steps, tests and safety rules. Projects open after you build your roadmap.">
+  <PageHeader eyebrow="Build something real" title="Projects" lede={`${projects.length} portfolio projects, grouped by career path. Each one has steps, tests you run yourself and a piece of work you can show an employer.`} crumbs={[{ label: 'Projects' }]} />
+  <div class="la-wrap la-projects">
+    <ProjectLock />
+    <p class="la-meta la-projects__yours" hidden data-yours-note>Your path is shown first.</p>
+    <div data-groups>
+      {groups.map((g) => (
+        <section class="la-pgroup" aria-labelledby={`pg-${g.id}`} data-path-group={g.id}>
+          <h2 id={`pg-${g.id}`}>{g.label} <span class="la-chip la-chip--yours" hidden data-yours-chip>Your path</span></h2>
+          <div class="la-grid">
+            {g.items.map((p) => (
+              <article class="la-card la-pcard" style={`--lvl: var(--ji-l${p.data.level})`} data-item={`project:${slugOf(p.id)}`}>
+                <p class="la-pcard__chips"><span class="la-chip">Level {p.data.level}</span><span class="la-chip">About {hours(p.data.minutes)} hours</span><span class="la-chip la-chip--done" hidden data-done-chip>Done</span></p>
+                <h3><a href={url(`projects/${slugOf(p.id)}`)}>{p.data.title}</a></h3>
+                <p>{p.data.promise}</p>
+                <p class="la-meta">Tools: {p.data.tools.join(', ')}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  </div>
+</BaseLayout>
+<script>
+  import { getProfile, getProgress } from '../../lib/storage';
+  const profile = getProfile<unknown>();
+  const path = profile?.complete ? profile.path : undefined;
+  const wrap = document.querySelector<HTMLElement>('[data-groups]');
+  const mine = path ? wrap?.querySelector<HTMLElement>(`[data-path-group="${path}"]`) : null;
+  if (wrap && mine) {
+    wrap.prepend(mine);
+    mine.querySelector<HTMLElement>('[data-yours-chip]')!.hidden = false;
+    document.querySelector<HTMLElement>('[data-yours-note]')!.hidden = false;
+  }
+  const done = new Set(getProgress().done);
+  document.querySelectorAll<HTMLElement>('.la-pcard').forEach((c) => {
+    if (done.has(c.dataset.item!)) c.querySelector<HTMLElement>('[data-done-chip]')!.hidden = false;
+  });
+</script>
+<style>
+  .la-projects { margin-top: var(--ji-s-6); }
+  .la-projects > .la-lock { max-width: 860px; margin-bottom: var(--ji-s-5); }
+  .la-pgroup { margin-top: var(--ji-s-6); }
+  .la-pgroup h2 { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .la-chip--yours { background: var(--ji-highlight-soft); color: var(--ji-ink); }
+  .la-pcard { position: relative; display: flex; flex-direction: column; border-top: 6px solid var(--lvl); }
+  .la-pcard__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .la-pcard h3 { font-size: 1.1875rem; }
+  .la-pcard h3 a { color: var(--ji-ink); text-decoration: none; }
+  .la-pcard h3 a::after { content: ''; position: absolute; inset: 0; }
+  .la-pcard h3 a:hover { text-decoration: underline; }
+  .la-pcard:focus-within { outline: 3px solid var(--ji-focus); outline-offset: 2px; }
+  .la-pcard h3 a:focus-visible { outline: none; }
+  .la-pcard .la-meta { margin: auto 0 0; }
+</style>

@@ -1,0 +1,123 @@
+---
+import '../styles/global.css';
+import '../styles/overlays.css';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import { SITE, absolute, url } from '../lib/site';
+
+interface Props {
+  title: string;
+  description?: string;
+  /** Path inside /learnai/, for example "learn/level-1". Empty for the home page. */
+  path?: string;
+  ogType?: 'website' | 'article';
+  noindex?: boolean;
+  jsonLd?: Record<string, unknown>;
+}
+
+const { title, description = SITE.description, path = '', ogType = 'website', noindex = false, jsonLd } = Astro.props;
+// Search results cut titles at about 60 to 65 characters, so long page titles get a shorter site name.
+const withSite = (t: string) => {
+  for (const suffix of [` · ${SITE.name}`, ` · ${SITE.shortName}`]) if ((t + suffix).length <= 65) return t + suffix;
+  return t;
+};
+const fullTitle = path === '' ? `${SITE.name}: learn AI by doing real work` : withSite(title);
+const canonical = absolute(path);
+const ogImage = absolute(SITE.ogImage);
+const themeKey = `${SITE.storagePrefix}theme`;
+const profileKey = `${SITE.storagePrefix}profile`;
+const ld = jsonLd ?? {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: fullTitle,
+  description,
+  url: canonical,
+  inLanguage: 'en',
+  isPartOf: { '@type': 'WebSite', name: SITE.name, url: absolute('') },
+  author: { '@type': 'Person', name: SITE.author },
+};
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <meta name="author" content={SITE.author} />
+    <meta name="theme-color" content="#6F907B" />
+    <link rel="icon" href={url('favicon.svg')} type="image/svg+xml" />
+    <link rel="preload" href={url('fonts/atkinson-next-latin-var.woff2')} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={url('fonts/oswald-latin-var.woff2')} as="font" type="font/woff2" crossorigin />
+
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="JeyInsights Learn AI badge on a sage green background" />
+    <meta property="og:locale" content="en_IN" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <script type="application/ld+json" set:html={JSON.stringify(ld)} />
+    <script is:inline define:vars={{ themeKey, profileKey }}>
+      document.documentElement.classList.add('js');
+      try { var t = localStorage.getItem(themeKey); if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t; } catch (e) {}
+      // Projects open after the roadmap is built. Mark the page before it draws, so nothing flashes.
+      // If storage is blocked, nothing is marked and project steps stay visible.
+      try { var p = JSON.parse(localStorage.getItem(profileKey) || 'null'); document.documentElement.dataset.laRoadmap = p && p.v === 1 && p.complete ? 'done' : 'none'; } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <a class="la-skip" href="#main">Skip to main content</a>
+    <SiteHeader />
+    <main id="main">
+      <slot />
+    </main>
+    <SiteFooter />
+    <button type="button" class="la-stuck la-no-print" data-la-help-open aria-haspopup="dialog">
+      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9.5" stroke="currentColor" stroke-width="2" fill="none"/><path d="M9.5 9.3a2.6 2.6 0 0 1 5 .9c0 1.7-2.5 2.2-2.5 3.8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="12" cy="17.2" r="1.2" fill="currentColor"/></svg>
+      I am stuck
+    </button>
+    <script>
+      import '../components/overlays/loader';
+    </script>
+    <script>
+      // Move focus to the page heading after moving between Learn AI pages,
+      // so screen reader users hear the new page name first.
+      const h1 = document.querySelector<HTMLElement>('main h1');
+      const fromInside = document.referrer.startsWith(`${location.origin}/learnai/`);
+      if (h1 && fromInside && !location.hash) {
+        h1.setAttribute('tabindex', '-1');
+        h1.focus({ preventScroll: true });
+      }
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  .la-skip {
+    position: absolute; left: var(--ji-s-4); top: -100px; z-index: 100;
+    background: var(--ji-primary); color: var(--ji-on-primary);
+    padding: 10px 16px; border-radius: var(--ji-r-md); font-weight: 700; text-decoration: none;
+  }
+  .la-skip:focus { top: var(--ji-s-3); }
+  .la-stuck {
+    position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); z-index: 30;
+    display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 10px 18px;
+    font: 700 1rem/1 var(--ji-font-body); color: var(--ji-on-primary); background: var(--ji-primary);
+    border: 2px solid var(--ji-surface); border-radius: var(--ji-r-pill); box-shadow: var(--ji-shadow-lg); cursor: pointer;
+  }
+  .la-stuck:hover { background: var(--ji-primary-hover); }
+  /* Leave room so the button never covers the last line of the footer. */
+  body { padding-bottom: 72px; }
+</style>
+

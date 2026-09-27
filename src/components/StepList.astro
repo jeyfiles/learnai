@@ -1,0 +1,42 @@
+---
+// Numbered steps with an action, an optional click path and prompt, and a checkpoint.
+import PromptBox from './PromptBox.astro';
+interface Step { title: string; action: string; clickPath?: string[]; prompt?: string; checkpoint: string }
+interface Props { steps: Step[]; headingLevel?: 'h3' | 'h4' }
+const { steps, headingLevel = 'h3' } = Astro.props;
+const H = headingLevel;
+---
+<ol class="la-steps-list">
+  {steps.map((s, i) => (
+    <li class="la-step">
+      <span class="la-step__num" aria-hidden="true">{i + 1}</span>
+      <div class="la-step__body">
+        <H class="la-step__title"><span class="la-visually-hidden">Step {i + 1}: </span>{s.title}</H>
+        <p>{s.action}</p>
+        {s.clickPath && s.clickPath.length > 0 && (
+          <p class="la-click"><span class="la-click__label">Click:</span>{' '}
+            {s.clickPath.map((c, j) => (
+              <>{j > 0 && <span class="la-click__sep" aria-hidden="true">›</span>}{j > 0 && <span class="la-visually-hidden">, then</span>}<b>{c}</b></>
+            ))}
+          </p>
+        )}
+        {s.prompt && <PromptBox text={s.prompt} />}
+        <p class="la-checkpoint"><strong>Check:</strong> {s.checkpoint}</p>
+      </div>
+    </li>
+  ))}
+</ol>
+
+<style>
+  .la-steps-list { list-style: none; margin: var(--ji-s-4) 0 0; padding: 0; display: grid; gap: var(--ji-s-5); }
+  .la-step { display: grid; grid-template-columns: 40px 1fr; gap: var(--ji-s-3); }
+  .la-step__num { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: var(--ji-brand); color: #FFFFFF; font-family: var(--ji-font-head); font-size: 1.125rem; }
+  .la-step__title { font-size: 1.1875rem; margin: 4px 0 var(--ji-s-2); }
+  .la-step__body > p { margin-bottom: var(--ji-s-3); }
+  .la-step__body { min-width: 0; }
+  .la-click { font-size: .9375rem; background: var(--ji-surface-2); border-radius: var(--ji-r-sm); padding: 8px 12px; overflow-wrap: anywhere; }
+  .la-click b { white-space: normal; }
+  .la-click__label { color: var(--ji-muted); }
+  .la-click__sep { margin: 0 6px; color: var(--ji-muted); }
+  .la-checkpoint { font-size: .9375rem; border-left: 4px solid var(--ji-success); background: var(--ji-success-soft); padding: 10px 14px; border-radius: 0 var(--ji-r-sm) var(--ji-r-sm) 0; margin: 0; }
+</style>
