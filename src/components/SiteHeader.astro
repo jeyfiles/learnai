@@ -1,12 +1,12 @@
 ---
 import BrandMark from './BrandMark.astro';
-import { NAV, url, SITE } from '../lib/site';
+import { NAV, SITE } from '../lib/site';
 
 const current = Astro.url.pathname;
 ---
 <header class="la-header la-no-print">
   <div class="la-wrap la-header__row">
-    <a class="la-brand" href={url()}>
+    <a class="la-brand" href={SITE.origin}>
       <BrandMark size={40} />
       <span class="la-brand__text">JeyInsights<span class="la-brand__sub">Learn AI</span></span>
     </a>
